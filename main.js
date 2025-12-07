@@ -993,11 +993,9 @@ if (typeof module !== 'undefined' && module.exports) {
             setTimeout(() => {
                 document.body.removeChild(notification);
             }, 300);
-        }, 3000);
+         }, 3000);
     }
-    }   // ← this closes the FinanceFlow class
-
-}   // ← this closes the class FinanceFlow { ... }
+}   // closes FinanceFlow class
 
 // Initialize FinanceFlow when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
