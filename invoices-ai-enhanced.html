@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoices - FinanceFlow (AI-Enhanced)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-indigo: #4C1D95;
+            --royal-purple: #7C3AED;
+            --soft-lavender: #A78BFA;
+            --light-periwinkle: #E0E7FF;
+            --charcoal: #374151;
+            --slate-gray: #64748B;
+            --success-green: #10B981;
+            --warning-amber: #F59E0B;
+            --error-red: #EF4444;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--light-periwinkle) 0%, #ffffff 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            background: rgba(124, 58, 237, 0.1);
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--deep-indigo), var(--royal-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(76, 29, 149, 0.2), 0 10px 10px -5px rgba(76, 29, 149, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--royal-purple), var(--soft-lavender));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3);
+        }
+        
+        .invoice-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-paid {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .status-overdue {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        
+        .status-draft {
+            background: #E0E7FF;
+            color: #3730A3;
+        }
+        
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .ai-generator {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .ai-thinking {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-nav fixed w-full top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <h1 class="text-2xl font-bold gradient-text">FinanceFlow</h1>
+                <div class="hidden md:flex space-x-6">
+                    <a href="index.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Dashboard</a>
+                    <a href="expenses.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Expenses</a>
+                    <a href="clients.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Clients</a>
+                    <a href="invoices-ai-enhanced.html" class="text-white font-medium px-3 py-2 rounded-lg bg-purple-600 bg-opacity-20">Invoices</a>
+                    <a href="reports.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Reports</a>
+                    <a href="analytics.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Analytics</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-20 transition-colors">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3"></path>
+                    </svg>
+                </button>
+                <img src="resources/user-avatar.png" alt="User" class="w-10 h-10 rounded-full border-2 border-purple-400">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="pt-24 pb-8 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-4xl font-bold gradient-text mb-2">Invoice Management</h2>
+                    <p class="text-gray-600">Create, track, and manage invoices with AI-powered insights and generation</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="createInvoiceBtn" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold">
+                        <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
+                        </svg>
+                        Create Invoice
+                    </button>
+                    <button id="aiInvoiceGeneratorBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                        <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        AI Invoice Generator
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Invoice Generator Section -->
+    <section class="px-6 mb-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="ai-generator p-6 rounded-xl reveal">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">AI Invoice Generator</h3>
+                            <p class="text-sm text-gray-600">Let AI create professional invoices based on your project details</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-green-600 bg-green-100 px-3 py-1 rounded-full">Beta</span>
+                        <button id="toggleAIGenerator" class="text-green-600 hover:text-green-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="aiGeneratorContent" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- AI Input Form -->
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Project Description *</label>
+                                <textarea id="projectDescription" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Describe your project or services... e.g., 'Website redesign for local restaurant including homepage, menu page, and contact form with responsive design'"></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Client</label>
+                                    <select id="aiClient" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        <option value="">Select client</option>
+                                        <option value="Acme Corp">Acme Corp</option>
+                                        <option value="Creative Agency">Creative Agency</option>
+                                        <option value="Tech Startup">Tech Startup</option>
+                                        <option value="Healthcare Solutions">Healthcare Solutions</option>
+                                        <option value="Retail Chain Inc">Retail Chain Inc</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
+                                    <select id="projectType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        <option value="web-design">Web Design</option>
+                                        <option value="consulting">Consulting</option>
+                                        <option value="marketing">Marketing</option>
+                                        <option value="software">Software Development</option>
+                                        <option value="graphic-design">Graphic Design</option>
+                                        <option value="writing">Writing/Content</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Estimated Hours</label>
+                                    <input type="number" id="estimatedHours" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="e.g., 40">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Hourly Rate ($)</label>
+                                    <input type="number" id="hourlyRate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="e.g., 75">
+                                </div>
+                            </div>
+                            
+                            <button id="generateAIInvoice" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
+                                <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                                </svg>
+                                Generate AI Invoice
+                            </button>
+                        </div>
+                        
+                        <!-- AI Preview -->
+                        <div class="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
+                            <div id="aiInvoicePreview" class="hidden">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">AI-Generated Invoice Preview</h4>
+                                <div id="previewContent" class="space-y-4">
+                                    <!-- AI-generated content will appear here -->
+                                </div>
+                                <div class="mt-6 flex space-x-3">
+                                    <button id="acceptAIInvoice" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">Accept & Create</button>
+                                    <button id="refineAIInvoice" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors">Refine</button>
+                                </div>
+                            </div>
+                            
+                            <div id="aiPlaceholder" class="text-center py-12">
+                                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                <p class="text-gray-600 mb-2">AI Invoice Generator</p>
+                                <p class="text-sm text-gray-500">Fill in the project details and let AI create a professional invoice for you</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Invoice Stats -->
+    <section class="px-6 mb-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="invoice-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Total Invoiced</h3>
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">$89.4K</div>
+                    <div class="text-sm text-green-600 mt-2">+24% this year</div>
+                </div>
+                
+                <div class="invoice-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Paid Invoices</h3>
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">$71.2K</div>
+                    <div class="text-sm text-green-600 mt-2">79% collection rate</div>
+                </div>
+                
+                <div class="invoice-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Outstanding</h3>
+                        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">$18.2K</div>
+                    <div class="text-sm text-amber-600 mt-2">12 pending invoices</div>
+                </div>
+                
+                <div class="invoice-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Avg. Payment Time</h3>
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">18 days</div>
+                    <div class="text-sm text-blue-600 mt-2">2 days faster</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="px-6 mb-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Invoices List -->
+                <div class="lg:col-span-2">
+                    <div class="invoice-card p-6 rounded-xl reveal">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-semibold text-gray-900">Recent Invoices</h3>
+                            <div class="flex items-center space-x-2">
+                                <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                                    <option value="all">All Status</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="overdue">Overdue</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                                <div class="relative">
+                                    <input type="text" id="searchInput" placeholder="Search invoices..." class="pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm w-48">
+                                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="invoicesList" class="space-y-4">
+                            <!-- Invoices will be populated by JavaScript -->
+                        </div>
+                        
+                        <div class="mt-6 flex items-center justify-between">
+                            <p class="text-sm text-gray-600">Showing 1-10 of 24 invoices</p>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Previous</button>
+                                <button class="px-3 py-1 text-sm bg-purple-600 text-white rounded-lg">1</button>
+                                <button class="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
+                                <button class="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Invoice Tools -->
+                <div class="space-y-6">
+                    <!-- Payment Overview -->
+                    <div class="invoice-card p-6 rounded-xl reveal">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Overview</h3>
+                        <div id="paymentChart" style="height: 200px;"></div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="invoice-card p-6 rounded-xl reveal">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <button class="w-full p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-left">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-purple-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="font-medium text-gray-900">Create Invoice</p>
+                                        <p class="text-sm text-gray-600">Generate new invoice</p>
+                                    </div>
+                                </div>
+                            </button>
+                            
+                            <button class="w-full p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="font-medium text-gray-900">Send Reminders</p>
+                                        <p class="text-sm text-gray-600">Follow up on payments</p>
+                                    </div>
+                                </div>
+                            </button>
+                            
+                            <button class="w-full p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <div>
+                                        <p class="font-medium text-gray-900">Recurring Setup</p>
+                                        <p class="text-sm text-gray-600">Automate invoices</p>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Overdue Invoices -->
+                    <div class="invoice-card p-6 rounded-xl reveal">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Overdue Invoices</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-900">#INV-2025-001</p>
+                                    <p class="text-sm text-gray-600">Acme Corp • $2,500</p>
+                                </div>
+                                <span class="text-xs text-red-600">15 days overdue</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-900">#INV-2025-008</p>
+                                    <p class="text-sm text-gray-600">Tech Startup • $1,200</p>
+                                </div>
+                                <span class="text-xs text-red-600">8 days overdue</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-900">#INV-2025-012</p>
+                                    <p class="text-sm text-gray-600">Healthcare Co • $5,000</p>
+                                </div>
+                                <span class="text-xs text-red-600">3 days overdue</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create Invoice Modal -->
+    <div id="createInvoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">Create Invoice</h3>
+                <button id="closeInvoiceModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="invoiceForm" class="space-y-6">
+                <!-- Client Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Client *</label>
+                        <select id="invoiceClient" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select client</option>
+                            <option value="Acme Corp">Acme Corp</option>
+                            <option value="Creative Agency">Creative Agency</option>
+                            <option value="Tech Startup">Tech Startup</option>
+                            <option value="Healthcare Solutions">Healthcare Solutions</option>
+                            <option value="Retail Chain Inc">Retail Chain Inc</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Invoice Date</label>
+                        <input type="date" id="invoiceDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                        <input type="date" id="dueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Terms</label>
+                        <select id="paymentTerms" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="net-15">Net 15</option>
+                            <option value="net-30" selected>Net 30</option>
+                            <option value="net-45">Net 45</option>
+                            <option value="net-60">Net 60</option>
+                            <option value="due-on-receipt">Due on Receipt</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Line Items -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">Line Items</h4>
+                        <button type="button" id="addLineItem" class="text-purple-600 hover:text-purple-700 text-sm font-medium">+ Add Item</button>
+                    </div>
+                    
+                    <div id="lineItems" class="space-y-4">
+                        <div class="line-item grid grid-cols-12 gap-4 p-4 bg-gray-50 rounded-lg">
+                            <div class="col-span-5">
+                                <input type="text" placeholder="Description" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" placeholder="Quantity" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                            <div class="col-span-3">
+                                <input type="number" placeholder="Rate" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                            <div class="col-span-2">
+                                <input type="number" placeholder="Amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Invoice Summary -->
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Subtotal:</p>
+                            <p class="text-sm text-gray-600">Tax (0%):</p>
+                            <p class="text-lg font-semibold text-gray-900">Total:</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-900" id="subtotal">$0.00</p>
+                            <p class="text-sm text-gray-900" id="tax">$0.00</p>
+                            <p class="text-lg font-semibold text-gray-900" id="total">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea id="invoiceNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Additional notes or payment instructions..."></textarea>
+                </div>
+                
+                <!-- AI Suggestions -->
+                <div id="aiSuggestions" class="hidden bg-purple-50 p-4 rounded-lg">
+                    <h5 class="text-sm font-medium text-purple-900 mb-2">AI Suggestions</h5>
+                    <div id="suggestionsList" class="space-y-1 text-sm text-purple-700">
+                        <!-- AI suggestions will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 pt-4">
+                    <button type="submit" class="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors">Create Invoice</button>
+                    <button type="button" id="saveDraftBtn" class="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors">Save Draft</button>
+                    <button type="button" id="cancelInvoiceBtn" class="flex-1 bg-red-200 text-red-800 py-3 px-4 rounded-lg hover:bg-red-300 transition-colors">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-gray-400">&copy; 2025 FinanceFlow. AI-powered financial management for freelancers.</p>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // Enhanced Invoices page with AI Invoice Generator
+        class InvoicesPageEnhanced {
+            constructor() {
+                this.invoices = [
+                    {
+                        id: 'INV-2025-001',
+                        client: 'Acme Corp',
+                        amount: 2500,
+                        date: '2025-11-20',
+                        dueDate: '2025-12-20',
+                        status: 'overdue',
+                        items: ['Website Development', 'SEO Optimization']
+                    },
+                    {
+                        id: 'INV-2025-002',
+                        client: 'Creative Agency',
+                        amount: 3200,
+                        date: '2025-11-25',
+                        dueDate: '2025-12-25',
+                        status: 'paid',
+                        items: ['Brand Design', 'Marketing Materials']
+                    },
+                    {
+                        id: 'INV-2025-003',
+                        client: 'Tech Startup',
+                        amount: 1800,
+                        date: '2025-11-28',
+                        dueDate: '2025-12-28',
+                        status: 'pending',
+                        items: ['App Development', 'Testing']
+                    },
+                    {
+                        id: 'INV-2025-004',
+                        client: 'Healthcare Solutions',
+                        amount: 4500,
+                        date: '2025-12-01',
+                        dueDate: '2026-01-01',
+                        status: 'pending',
+                        items: ['System Integration', 'Training']
+                    },
+                    {
+                        id: 'INV-2025-005',
+                        client: 'Retail Chain Inc',
+                        amount: 2100,
+                        date: '2025-12-03',
+                        dueDate: '2026-01-03',
+                        status: 'paid',
+                        items: ['POS System', 'Inventory Management']
+                    },
+                    {
+                        id: 'INV-2025-006',
+                        client: 'Financial Services Co',
+                        amount: 3800,
+                        date: '2025-12-05',
+                        dueDate: '2026-01-05',
+                        status: 'pending',
+                        items: ['Security Audit', 'Compliance Review']
+                    },
+                    {
+                        id: 'INV-2025-007',
+                        client: 'Education Platform',
+                        amount: 1650,
+                        date: '2025-12-07',
+                        dueDate: '2026-01-07',
+                        status: 'paid',
+                        items: ['Learning Management System']
+                    },
+                    {
+                        id: 'INV-2025-008',
+                        client: 'Tech Startup',
+                        amount: 1200,
+                        date: '2025-12-10',
+                        dueDate: '2026-01-10',
+                        status: 'overdue',
+                        items: ['Additional Features', 'Bug Fixes']
+                    }
+                ];
+                
+                this.filteredInvoices = [...this.invoices];
+                this.aiGeneratorVisible = false;
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.renderInvoices();
+                this.initializeChart();
+                this.setupScrollReveal();
+            }
+            
+            setupEventListeners() {
+                // AI Invoice Generator
+                document.getElementById('aiInvoiceGeneratorBtn').addEventListener('click', () => {
+                    this.toggleAIGenerator();
+                });
+                
+                document.getElementById('toggleAIGenerator').addEventListener('click', () => {
+                    this.toggleAIGenerator();
+                });
+                
+                document.getElementById('generateAIInvoice').addEventListener('click', () => {
+                    this.generateAIInvoice();
+                });
+                
+                document.getElementById('acceptAIInvoice').addEventListener('click', () => {
+                    this.acceptAIInvoice();
+                });
+                
+                document.getElementById('refineAIInvoice').addEventListener('click', () => {
+                    this.refineAIInvoice();
+                });
+                
+                // Existing invoice functionality
+                document.getElementById('createInvoiceBtn').addEventListener('click', () => {
+                    this.showCreateInvoiceModal();
+                });
+                
+                document.getElementById('closeInvoiceModal').addEventListener('click', () => {
+                    this.hideCreateInvoiceModal();
+                });
+                
+                document.getElementById('cancelInvoiceBtn').addEventListener('click', () => {
+                    this.hideCreateInvoiceModal();
+                });
+                
+                document.getElementById('invoiceForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleInvoiceSubmit();
+                });
+                
+                document.getElementById('saveDraftBtn').addEventListener('click', () => {
+                    this.saveDraft();
+                });
+                
+                document.getElementById('addLineItem').addEventListener('click', () => {
+                    this.addLineItem();
+                });
+                
+                document.getElementById('statusFilter').addEventListener('change', (e) => {
+                    this.handleStatusFilter(e.target.value);
+                });
+                
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.handleSearch(e.target.value);
+                });
+                
+                document.getElementById('paymentTerms').addEventListener('change', () => {
+                    this.updateDueDate();
+                });
+                
+                document.getElementById('invoiceClient').addEventListener('change', () => {
+                    this.generateAISuggestions();
+                });
+            }
+            
+            // AI Invoice Generator Methods
+            toggleAIGenerator() {
+                const content = document.getElementById('aiGeneratorContent');
+                const button = document.getElementById('toggleAIGenerator');
+                
+                if (this.aiGeneratorVisible) {
+                    // Hide
+                    anime({
+                        targets: content,
+                        height: [content.scrollHeight, 0],
+                        opacity: [1, 0],
+                        duration: 300,
+                        easing: 'easeInQuart',
+                        complete: () => {
+                            content.classList.add('hidden');
+                        }
+                    });
+                    
+                    button.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    `;
+                } else {
+                    // Show
+                    content.classList.remove('hidden');
+                    const targetHeight = content.scrollHeight;
+                    
+                    anime({
+                        targets: content,
+                        height: [0, targetHeight],
+                        opacity: [0, 1],
+                        duration: 400,
+                        easing: 'easeOutQuart'
+                    });
+                    
+                    button.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                    `;
+                }
+                
+                this.aiGeneratorVisible = !this.aiGeneratorVisible;
+            }
+            
+            generateAIInvoice() {
+                const projectDescription = document.getElementById('projectDescription').value;
+                const client = document.getElementById('aiClient').value;
+                const projectType = document.getElementById('projectType').value;
+                const estimatedHours = parseFloat(document.getElementById('estimatedHours').value) || 0;
+                const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+                
+                if (!projectDescription.trim()) {
+                    this.showErrorMessage('Please provide a project description');
+                    return;
+                }
+                
+                // Show thinking state
+                this.showAIThinking();
+                
+                // Simulate AI processing
+                setTimeout(() => {
+                    const aiInvoice = this.createAIInvoice(projectDescription, client, projectType, estimatedHours, hourlyRate);
+                    this.displayAIInvoicePreview(aiInvoice);
+                }, 2000);
+            }
+            
+            createAIInvoice(description, client, type, hours, rate) {
+                // AI logic to generate invoice based on project details
+                const templates = {
+                    'web-design': {
+                        items: [
+                            { description: 'Website Design & Development', quantity: 1, rate: hours * rate || 2500 },
+                            { description: 'Responsive Design Implementation', quantity: 1, rate: 500 },
+                            { description: 'Testing & Quality Assurance', quantity: 1, rate: 300 }
+                        ],
+                        notes: 'Includes responsive design, cross-browser testing, and 30 days of support.'
+                    },
+                    'consulting': {
+                        items: [
+                            { description: 'Strategic Consulting Services', quantity: hours || 20, rate: rate || 150 },
+                            { description: 'Research & Analysis', quantity: 1, rate: 800 },
+                            { description: 'Report Preparation', quantity: 1, rate: 400 }
+                        ],
+                        notes: 'Consulting services as discussed. Includes comprehensive analysis and recommendations.'
+                    },
+                    'marketing': {
+                        items: [
+                            { description: 'Marketing Strategy Development', quantity: 1, rate: 1200 },
+                            { description: 'Campaign Management', quantity: hours || 15, rate: rate || 100 },
+                            { description: 'Performance Analytics', quantity: 1, rate: 300 }
+                        ],
+                        notes: 'Digital marketing services including strategy, execution, and performance tracking.'
+                    },
+                    'software': {
+                        items: [
+                            { description: 'Software Development', quantity: 1, rate: hours * rate || 3000 },
+                            { description: 'Code Review & Testing', quantity: 1, rate: 600 },
+                            { description: 'Documentation', quantity: 1, rate: 200 }
+                        ],
+                        notes: 'Custom software development with testing and documentation.'
+                    },
+                    'graphic-design': {
+                        items: [
+                            { description: 'Graphic Design Services', quantity: hours || 10, rate: rate || 80 },
+                            { description: 'Brand Guidelines', quantity: 1, rate: 500 },
+                            { description: 'File Delivery & Formats', quantity: 1, rate: 100 }
+                        ],
+                        notes: 'Professional graphic design services with multiple file formats and brand guidelines.'
+                    },
+                    'writing': {
+                        items: [
+                            { description: 'Content Writing Services', quantity: hours || 8, rate: rate || 75 },
+                            { description: 'Research & Fact-checking', quantity: 1, rate: 200 },
+                            { description: 'Revisions & Editing', quantity: 1, rate: 150 }
+                        ],
+                        notes: 'Professional writing services including research, writing, and editing.'
+                    }
+                };
+                
+                const template = templates[type] || templates['consulting'];
+                
+                // Calculate total
+                const subtotal = template.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+                
+                return {
+                    client: client || 'Client',
+                    items: template.items,
+                    subtotal: subtotal,
+                    tax: 0,
+                    total: subtotal,
+                    notes: template.notes,
+                    confidence: Math.floor(Math.random() * 20) + 80 // 80-100% confidence
+                };
+            }
+            
+            showAIThinking() {
+                const preview = document.getElementById('aiInvoicePreview');
+                const placeholder = document.getElementById('aiPlaceholder');
+                
+                placeholder.innerHTML = `
+                    <div class="ai-thinking text-center py-8">
+                        <svg class="w-12 h-12 text-green-600 mx-auto mb-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <p class="text-green-600 font-medium mb-2">AI is analyzing your project...</p>
+                        <p class="text-sm text-gray-500">Generating professional invoice based on your requirements</p>
+                    </div>
+                `;
+                
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+            
+            displayAIInvoicePreview(aiInvoice) {
+                const preview = document.getElementById('aiInvoicePreview');
+                const placeholder = document.getElementById('aiPlaceholder');
+                const content = document.getElementById('previewContent');
+                
+                content.innerHTML = `
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-purple-900">AI Confidence Score</span>
+                            <span class="text-sm text-purple-700">${aiInvoice.confidence}%</span>
+                        </div>
+                        <div class="w-full bg-purple-200 rounded-full h-2">
+                            <div class="bg-purple-600 h-2 rounded-full" style="width: ${aiInvoice.confidence}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold text-gray-900 mb-3">Invoice Details</h5>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Client:</span>
+                                <span class="font-medium">${aiInvoice.client}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total Amount:</span>
+                                <span class="font-semibold text-green-600">$${aiInvoice.total.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h5 class="font-semibold text-gray-900 mb-3">Line Items</h5>
+                        <div class="space-y-2">
+                            ${aiInvoice.items.map(item => `
+                                <div class="flex justify-between text-sm">
+                                    <span>${item.description} (${item.quantity})</span>
+                                    <span>$${(item.quantity * item.rate).toLocaleString()}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h5 class="font-semibold text-blue-900 mb-2">AI-Generated Notes</h5>
+                        <p class="text-sm text-blue-700">${aiInvoice.notes}</p>
+                    </div>
+                `;
+                
+                placeholder.classList.add('hidden');
+                preview.classList.remove('hidden');
+                
+                // Store the AI invoice for acceptance
+                this.currentAIInvoice = aiInvoice;
+                
+                // Animate the preview appearance
+                anime({
+                    targets: preview,
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 400,
+                    easing: 'easeOutQuart'
+                });
+            }
+            
+            acceptAIInvoice() {
+                if (!this.currentAIInvoice) return;
+                
+                // Create invoice from AI-generated data
+                const newInvoice = {
+                    id: `INV-2025-AI-${String(this.invoices.length + 1).padStart(3, '0')}`,
+                    client: this.currentAIInvoice.client,
+                    amount: this.currentAIInvoice.total,
+                    date: new Date().toISOString().split('T')[0],
+                    dueDate: this.calculateDueDate(30),
+                    status: 'draft',
+                    items: this.currentAIInvoice.items.map(item => item.description)
+                };
+                
+                this.invoices.unshift(newInvoice);
+                this.applyFilters();
+                this.showSuccessMessage('AI-generated invoice created successfully!');
+                
+                // Reset AI generator
+                this.resetAIGenerator();
+            }
+            
+            refineAIInvoice() {
+                // Show refinement options
+                this.showSuccessMessage('AI refinement suggestions coming soon!');
+            }
+            
+            resetAIGenerator() {
+                document.getElementById('projectDescription').value = '';
+                document.getElementById('aiClient').value = '';
+                document.getElementById('estimatedHours').value = '';
+                document.getElementById('hourlyRate').value = '';
+                
+                document.getElementById('aiInvoicePreview').classList.add('hidden');
+                document.getElementById('aiPlaceholder').classList.remove('hidden');
+                
+                this.currentAIInvoice = null;
+            }
+            
+            calculateDueDate(days) {
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + days);
+                return dueDate.toISOString().split('T')[0];
+            }
+            
+            // Existing invoice functionality (from original invoices.html)
+            renderInvoices() {
+                const container = document.getElementById('invoicesList');
+                container.innerHTML = '';
+                
+                this.filteredInvoices.forEach(invoice => {
+                    const invoiceElement = this.createInvoiceElement(invoice);
+                    container.appendChild(invoiceElement);
+                });
+                
+                // Animate invoice cards
+                anime({
+                    targets: '.invoice-item',
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 600,
+                    easing: 'easeOutQuart',
+                    delay: anime.stagger(100)
+                });
+            }
+            
+            createInvoiceElement(invoice) {
+                const element = document.createElement('div');
+                element.className = 'invoice-item invoice-card p-6 rounded-xl card-hover';
+                
+                const statusClass = {
+                    'paid': 'status-paid',
+                    'pending': 'status-pending',
+                    'overdue': 'status-overdue',
+                    'draft': 'status-draft'
+                }[invoice.status];
+                
+                const daysUntilDue = Math.ceil((new Date(invoice.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+                const dueDateText = invoice.status === 'overdue' ? `${Math.abs(daysUntilDue)} days overdue` : 
+                                   daysUntilDue > 0 ? `Due in ${daysUntilDue} days` : 'Due today';
+                
+                element.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <h4 class="text-lg font-semibold text-gray-900 mr-3">${invoice.id}</h4>
+                                <span class="status-badge ${statusClass}">${invoice.status}</span>
+                            </div>
+                            <p class="text-gray-600 mb-1">${invoice.client}</p>
+                            <p class="text-sm text-gray-500">${invoice.items.join(', ')}</p>
+                            <div class="flex items-center mt-2 text-sm text-gray-500">
+                                <span>Invoiced: ${invoice.date}</span>
+                                <span class="mx-2">•</span>
+                                <span>${dueDateText}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-gray-900">$${invoice.amount.toLocaleString()}</p>
+                            <div class="flex space-x-2 mt-2">
+                                <button class="text-purple-600 hover:text-purple-700 text-sm font-medium">View</button>
+                                <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">Edit</button>
+                                ${invoice.status === 'pending' ? '<button class="text-green-600 hover:text-green-700 text-sm font-medium">Mark Paid</button>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                return element;
+            }
+            
+            showCreateInvoiceModal() {
+                const modal = document.getElementById('createInvoiceModal');
+                modal.classList.remove('hidden');
+                
+                // Set default dates
+                const today = new Date();
+                const nextMonth = new Date(today);
+                nextMonth.setMonth(today.getMonth() + 1);
+                
+                document.getElementById('invoiceDate').value = today.toISOString().split('T')[0];
+                document.getElementById('dueDate').value = nextMonth.toISOString().split('T')[0];
+                
+                // Animate modal appearance
+                anime({
+                    targets: modal,
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+                
+                anime({
+                    targets: modal.querySelector('.bg-white'),
+                    scale: [0.8, 1],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+            }
+            
+            hideCreateInvoiceModal() {
+                const modal = document.getElementById('createInvoiceModal');
+                
+                anime({
+                    targets: modal,
+                    opacity: [1, 0],
+                    duration: 200,
+                    easing: 'easeInQuart',
+                    complete: () => {
+                        modal.classList.add('hidden');
+                        this.resetInvoiceForm();
+                    }
+                });
+            }
+            
+            resetInvoiceForm() {
+                document.getElementById('invoiceForm').reset();
+                document.getElementById('aiSuggestions').classList.add('hidden');
+                this.updateTotals();
+            }
+            
+            addLineItem() {
+                const container = document.getElementById('lineItems');
+                const lineItem = document.createElement('div');
+                lineItem.className = 'line-item grid grid-cols-12 gap-4 p-4 bg-gray-50 rounded-lg';
+                
+                lineItem.innerHTML = `
+                    <div class="col-span-5">
+                        <input type="text" placeholder="Description" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div class="col-span-2">
+                        <input type="number" placeholder="Quantity" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div class="col-span-3">
+                        <input type="number" placeholder="Rate" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    </div>
+                    <div class="col-span-2">
+                        <input type="number" placeholder="Amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                    </div>
+                `;
+                
+                container.appendChild(lineItem);
+                this.setupLineItemCalculations(lineItem);
+                
+                // Animate new line item
+                anime({
+                    targets: lineItem,
+                    opacity: [0, 1],
+                    translateY: [20, 0],
+                    duration: 300,
+                    easing: 'easeOutQuart'
+                });
+            }
+            
+            setupLineItemCalculations(lineItem) {
+                const quantityInput = lineItem.querySelector('input[placeholder="Quantity"]');
+                const rateInput = lineItem.querySelector('input[placeholder="Rate"]');
+                const amountInput = lineItem.querySelector('input[placeholder="Amount"]');
+                
+                const calculateAmount = () => {
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    const rate = parseFloat(rateInput.value) || 0;
+                    amountInput.value = (quantity * rate).toFixed(2);
+                    this.updateTotals();
+                };
+                
+                quantityInput.addEventListener('input', calculateAmount);
+                rateInput.addEventListener('input', calculateAmount);
+            }
+            
+            updateTotals() {
+                let subtotal = 0;
+                document.querySelectorAll('.line-item').forEach(lineItem => {
+                    const amountInput = lineItem.querySelector('input[placeholder="Amount"]');
+                    subtotal += parseFloat(amountInput.value) || 0;
+                });
+                
+                const tax = 0; // Assuming no tax for simplicity
+                const total = subtotal + tax;
+                
+                document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+                document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            }
+            
+            updateDueDate() {
+                const paymentTerms = document.getElementById('paymentTerms').value;
+                const invoiceDate = new Date(document.getElementById('invoiceDate').value);
+                const dueDateInput = document.getElementById('dueDate');
+                
+                let daysToAdd = 30; // Default
+                switch(paymentTerms) {
+                    case 'net-15': daysToAdd = 15; break;
+                    case 'net-30': daysToAdd = 30; break;
+                    case 'net-45': daysToAdd = 45; break;
+                    case 'net-60': daysToAdd = 60; break;
+                    case 'due-on-receipt': daysToAdd = 0; break;
+                }
+                
+                const dueDate = new Date(invoiceDate);
+                dueDate.setDate(invoiceDate.getDate() + daysToAdd);
+                dueDateInput.value = dueDate.toISOString().split('T')[0];
+            }
+            
+            generateAISuggestions() {
+                const client = document.getElementById('invoiceClient').value;
+                if (!client) return;
+                
+                const suggestions = {
+                    'Acme Corp': [
+                        'Previous invoices averaged $2,800 - consider similar pricing',
+                        'Client prefers Net 30 terms',
+                        'Include detailed project breakdown'
+                    ],
+                    'Creative Agency': [
+                        'Typically pays within 15 days',
+                        'Prefers hourly billing format',
+                        'Add creative brief to invoice'
+                    ],
+                    'Tech Startup': [
+                        'Fast-growing company - consider retainer model',
+                        'Usually pays on time with early payment discount',
+                        'Include technical specifications'
+                    ]
+                };
+                
+                const clientSuggestions = suggestions[client];
+                if (clientSuggestions) {
+                    const suggestionsList = document.getElementById('suggestionsList');
+                    suggestionsList.innerHTML = clientSuggestions.map(suggestion => 
+                        `<p>• ${suggestion}</p>`
+                    ).join('');
+                    
+                    document.getElementById('aiSuggestions').classList.remove('hidden');
+                    
+                    // Animate suggestions
+                    anime({
+                        targets: '#aiSuggestions',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        duration: 400,
+                        easing: 'easeOutQuart'
+                    });
+                }
+            }
+            
+            handleInvoiceSubmit() {
+                const client = document.getElementById('invoiceClient').value;
+                const amount = parseFloat(document.getElementById('total').textContent.replace('$', ''));
+                
+                if (!client || amount <= 0) {
+                    alert('Please fill in all required fields and add at least one line item.');
+                    return;
+                }
+                
+                const newInvoice = {
+                    id: `INV-2025-${String(this.invoices.length + 1).padStart(3, '0')}`,
+                    client: client,
+                    amount: amount,
+                    date: document.getElementById('invoiceDate').value,
+                    dueDate: document.getElementById('dueDate').value,
+                    status: 'pending',
+                    items: Array.from(document.querySelectorAll('.line-item input[placeholder="Description"]'))
+                        .map(input => input.value)
+                        .filter(desc => desc.trim() !== '')
+                };
+                
+                this.invoices.unshift(newInvoice);
+                this.applyFilters();
+                this.hideCreateInvoiceModal();
+                this.showSuccessMessage('Invoice created successfully!');
+                this.initializeChart(); // Refresh chart
+            }
+            
+            saveDraft() {
+                // Similar to submit but with draft status
+                const client = document.getElementById('invoiceClient').value;
+                const amount = parseFloat(document.getElementById('total').textContent.replace('$', ''));
+                
+                if (!client || amount <= 0) {
+                    alert('Please fill in all required fields and add at least one line item.');
+                    return;
+                }
+                
+                const newInvoice = {
+                    id: `INV-2025-DRAFT-${String(this.invoices.filter(i => i.status === 'draft').length + 1).padStart(3, '0')}`,
+                    client: client,
+                    amount: amount,
+                    date: document.getElementById('invoiceDate').value,
+                    dueDate: document.getElementById('dueDate').value,
+                    status: 'draft',
+                    items: Array.from(document.querySelectorAll('.line-item input[placeholder="Description"]'))
+                        .map(input => input.value)
+                        .filter(desc => desc.trim() !== '')
+                };
+                
+                this.invoices.unshift(newInvoice);
+                this.applyFilters();
+                this.hideCreateInvoiceModal();
+                this.showSuccessMessage('Draft saved successfully!');
+            }
+            
+            handleStatusFilter(status) {
+                this.currentFilter = status;
+                this.applyFilters();
+            }
+            
+            handleSearch(query) {
+                this.searchQuery = query.toLowerCase();
+                this.applyFilters();
+            }
+            
+            applyFilters() {
+                let filtered = [...this.invoices];
+                
+                // Apply status filter
+                if (this.currentFilter && this.currentFilter !== 'all') {
+                    filtered = filtered.filter(invoice => invoice.status === this.currentFilter);
+                }
+                
+                // Apply search filter
+                if (this.searchQuery) {
+                    filtered = filtered.filter(invoice => 
+                        invoice.id.toLowerCase().includes(this.searchQuery) ||
+                        invoice.client.toLowerCase().includes(this.searchQuery) ||
+                        invoice.items.some(item => item.toLowerCase().includes(this.searchQuery))
+                    );
+                }
+                
+                this.filteredInvoices = filtered;
+                this.renderInvoices();
+            }
+            
+            initializeChart() {
+                const chartElement = document.getElementById('paymentChart');
+                if (!chartElement) return;
+                
+                const chart = echarts.init(chartElement);
+                
+                const statusCounts = this.invoices.reduce((acc, invoice) => {
+                    acc[invoice.status] = (acc[invoice.status] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    series: [
+                        {
+                            name: 'Invoice Status',
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            center: ['50%', '50%'],
+                            data: [
+                                { value: statusCounts.paid || 0, name: 'Paid', itemStyle: { color: '#10B981' } },
+                                { value: statusCounts.pending || 0, name: 'Pending', itemStyle: { color: '#F59E0B' } },
+                                { value: statusCounts.overdue || 0, name: 'Overdue', itemStyle: { color: '#EF4444' } },
+                                { value: statusCounts.draft || 0, name: 'Draft', itemStyle: { color: '#7C3AED' } }
+                            ],
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                
+                // Responsive resize
+                window.addEventListener('resize', () => {
+                    chart.resize();
+                });
+            }
+            
+            setupScrollReveal() {
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('active');
+                        }
+                    });
+                }, observerOptions);
+                
+                document.querySelectorAll('.reveal').forEach(el => {
+                    observer.observe(el);
+                });
+            }
+            
+            showSuccessMessage(message) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                toast.textContent = message;
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                
+                document.body.appendChild(toast);
+                
+                anime({
+                    targets: toast,
+                    opacity: [0, 1],
+                    translateX: ['100%', '0%'],
+                    duration: 300,
+                    easing: 'easeOutQuart',
+                    complete: () => {
+                        setTimeout(() => {
+                            anime({
+                                targets: toast,
+                                opacity: [1, 0],
+                                translateX: ['0%', '100%'],
+                                duration: 300,
+                                easing: 'easeInQuart',
+                                complete: () => {
+                                    toast.remove();
+                                }
+                            });
+                        }, 3000);
+                    }
+                });
+            }
+            
+            showErrorMessage(message) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                toast.textContent = message;
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                
+                document.body.appendChild(toast);
+                
+                anime({
+                    targets: toast,
+                    opacity: [0, 1],
+                    translateX: ['100%', '0%'],
+                    duration: 300,
+                    easing: 'easeOutQuart',
+                    complete: () => {
+                        setTimeout(() => {
+                            anime({
+                                targets: toast,
+                                opacity: [1, 0],
+                                translateX: ['0%', '100%'],
+                                duration: 300,
+                                easing: 'easeInQuart',
+                                complete: () => {
+                                    toast.remove();
+                                }
+                            });
+                        }, 3000);
+                    }
+                });
+            }
+        }
+        
+        // Initialize enhanced invoices page
+        document.addEventListener('DOMContentLoaded', () => {
+            new InvoicesPageEnhanced();
+        });
+    </script>
+</body>
+</html>

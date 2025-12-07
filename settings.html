@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - FinanceFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .stripe-element {
+            background: white;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .stripe-element.focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .success-animation {
+            animation: successPulse 0.6s ease-out;
+        }
+        @keyframes successPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <h1 class="font-display text-2xl font-bold">FinanceFlow</h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-white/80 hover:text-white transition-colors">Dashboard</a>
+                    <a href="expenses.html" class="text-white/80 hover:text-white transition-colors">Expenses</a>
+                    <a href="clients.html" class="text-white/80 hover:text-white transition-colors">Clients</a>
+                    <a href="invoices-ai-enhanced.html" class="text-white/80 hover:text-white transition-colors">Invoices</a>
+                    <a href="reports.html" class="text-white/80 hover:text-white transition-colors">Reports</a>
+                    <a href="analytics.html" class="text-white/80 hover:text-white transition-colors">Analytics</a>
+                    <a href="settings.html" class="text-white font-semibold">Settings</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-sm"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pt-24 pb-12">
+        <div class="max-w-6xl mx-auto px-6">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="font-display text-5xl font-bold mb-4 opacity-0" id="main-title">Settings & Subscription</h1>
+                <p class="text-xl text-white/80 opacity-0" id="subtitle">Manage your account and subscription preferences</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Profile Settings -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Account Information -->
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-user-circle mr-3 text-purple-300"></i>
+                            Account Information
+                        </h2>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Full Name</label>
+                                <input type="text" value="Sarah Johnson" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email Address</label>
+                                <input type="email" value="sarah.johnson@freelance.com" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Business Name</label>
+                                <input type="text" value="Creative Studio LLC" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Tax ID</label>
+                                <input type="text" value="12-3456789" class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-400">
+                            </div>
+                        </div>
+                        <button class="mt-6 px-6 py-3 bg-purple-500 hover:bg-purple-600 rounded-lg font-medium transition-colors">
+                            Update Profile
+                        </button>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-cog mr-3 text-purple-300"></i>
+                            Preferences
+                        </h2>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-medium">Email Notifications</h3>
+                                    <p class="text-sm text-white/70">Receive email updates about your account</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-medium">AI Assistant</h3>
+                                    <p class="text-sm text-white/70">Enable AI-powered insights and suggestions</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-medium">Auto-categorization</h3>
+                                    <p class="text-sm text-white/70">Automatically categorize expenses using AI</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security -->
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-shield-alt mr-3 text-purple-300"></i>
+                            Security
+                        </h2>
+                        <div class="space-y-4">
+                            <button class="w-full text-left p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-medium">Change Password</h3>
+                                        <p class="text-sm text-white/70">Update your account password</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </button>
+                            <button class="w-full text-left p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-medium">Two-Factor Authentication</h3>
+                                        <p class="text-sm text-white/70">Add an extra layer of security</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </button>
+                            <button class="w-full text-left p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="font-medium">API Keys</h3>
+                                        <p class="text-sm text-white/70">Manage your API access</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscription & Billing -->
+                <div class="space-y-6">
+                    <!-- Current Plan -->
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <h2 class="text-2xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-crown mr-3 text-yellow-300"></i>
+                            Current Plan
+                        </h2>
+                        <div class="text-center mb-6">
+                            <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-star text-3xl text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold">Professional</h3>
+                            <p class="text-white/70 mb-4">Perfect for growing freelancers</p>
+                            <div class="text-4xl font-bold mb-2">$29<span class="text-lg font-normal text-white/70">/month</span></div>
+                            <p class="text-sm text-white/70">Billed monthly</p>
+                        </div>
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Unlimited clients & invoices</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>AI-powered insights</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Advanced tax reports</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Priority support</span>
+                            </div>
+                        </div>
+                        <button class="w-full py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors" onclick="showPlanModal()">
+                            Change Plan
+                        </button>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <h2 class="text-xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-credit-card mr-3 text-purple-300"></i>
+                            Payment Method
+                        </h2>
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fab fa-cc-visa text-2xl mr-3"></i>
+                                    <div>
+                                        <p class="font-medium">•••• •••• •••• 4242</p>
+                                        <p class="text-sm text-white/70">Expires 12/2025</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">Primary</span>
+                            </div>
+                        </div>
+                        <button class="w-full py-3 bg-purple-500 hover:bg-purple-600 rounded-lg font-medium transition-colors" onclick="showPaymentModal()">
+                            Update Payment Method
+                        </button>
+                    </div>
+
+                    <!-- Billing History -->
+                    <div class="glass-effect rounded-2xl p-8 hover-lift">
+                        <h2 class="text-xl font-bold mb-6 flex items-center">
+                            <i class="fas fa-file-invoice mr-3 text-purple-300"></i>
+                            Billing History
+                        </h2>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                                <div>
+                                    <p class="font-medium">Dec 2024</p>
+                                    <p class="text-sm text-white/70">Professional Plan</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium">$29.00</p>
+                                    <a href="#" class="text-xs text-purple-300 hover:text-purple-200">Download</a>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                                <div>
+                                    <p class="font-medium">Nov 2024</p>
+                                    <p class="text-sm text-white/70">Professional Plan</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium">$29.00</p>
+                                    <a href="#" class="text-xs text-purple-300 hover:text-purple-200">Download</a>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-white/10 rounded-lg">
+                                <div>
+                                    <p class="font-medium">Oct 2024</p>
+                                    <p class="text-sm text-white/70">Professional Plan</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium">$29.00</p>
+                                    <a href="#" class="text-xs text-purple-300 hover:text-purple-200">Download</a>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="w-full mt-4 py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors">
+                            View All Invoices
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-effect rounded-2xl p-8 max-w-md w-full">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold">Update Payment Method</h3>
+                    <button onclick="hidePaymentModal()" class="text-white/70 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="payment-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Card Number</label>
+                        <div id="card-element" class="stripe-element"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Expiry</label>
+                            <div id="expiry-element" class="stripe-element"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">CVC</label>
+                            <div id="cvc-element" class="stripe-element"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="payment-message" class="hidden mb-4 p-3 rounded-lg"></div>
+                    
+                    <div class="flex space-x-4">
+                        <button type="button" onclick="hidePaymentModal()" class="flex-1 py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submit-payment" class="flex-1 py-3 bg-purple-500 hover:bg-purple-600 rounded-lg font-medium transition-colors">
+                            Update Card
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Selection Modal -->
+    <div id="planModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-effect rounded-2xl p-8 max-w-4xl w-full">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-3xl font-bold">Choose Your Plan</h3>
+                    <button onclick="hidePlanModal()" class="text-white/70 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Starter Plan -->
+                    <div class="glass-effect rounded-xl p-6 hover-lift">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-rocket text-2xl"></i>
+                            </div>
+                            <h4 class="text-xl font-bold">Starter</h4>
+                            <p class="text-white/70 text-sm">Perfect for beginners</p>
+                        </div>
+                        <div class="text-3xl font-bold text-center mb-6">$9<span class="text-sm font-normal text-white/70">/month</span></div>
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Up to 10 clients</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Basic invoicing</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Expense tracking</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-times text-red-400 mr-2"></i>
+                                <span class="text-white/50">AI insights</span>
+                            </div>
+                        </div>
+                        <button class="w-full py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors" onclick="selectPlan('starter')">
+                            Choose Starter
+                        </button>
+                    </div>
+
+                    <!-- Professional Plan -->
+                    <div class="glass-effect rounded-xl p-6 hover-lift border-2 border-purple-400">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-star text-2xl text-white"></i>
+                            </div>
+                            <h4 class="text-xl font-bold">Professional</h4>
+                            <p class="text-white/70 text-sm">Most popular choice</p>
+                            <span class="inline-block bg-purple-500 text-xs px-2 py-1 rounded mt-2">Current Plan</span>
+                        </div>
+                        <div class="text-3xl font-bold text-center mb-6">$29<span class="text-sm font-normal text-white/70">/month</span></div>
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Unlimited clients</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Advanced invoicing</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>AI-powered insights</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Tax reports</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Priority support</span>
+                            </div>
+                        </div>
+                        <button class="w-full py-3 bg-purple-500 hover:bg-purple-600 rounded-lg font-medium transition-colors">
+                            Current Plan
+                        </button>
+                    </div>
+
+                    <!-- Enterprise Plan -->
+                    <div class="glass-effect rounded-xl p-6 hover-lift">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-crown text-2xl"></i>
+                            </div>
+                            <h4 class="text-xl font-bold">Enterprise</h4>
+                            <p class="text-white/70 text-sm">For established businesses</p>
+                        </div>
+                        <div class="text-3xl font-bold text-center mb-6">$99<span class="text-sm font-normal text-white/70">/month</span></div>
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Everything in Professional</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Multiple users</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Custom integrations</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Advanced analytics</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-check text-green-400 mr-2"></i>
+                                <span>Dedicated support</span>
+                            </div>
+                        </div>
+                        <button class="w-full py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-colors" onclick="selectPlan('enterprise')">
+                            Choose Enterprise
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        // Initialize Stripe
+        const stripe = Stripe('pk_test_your_stripe_publishable_key_here');
+        let elements;
+
+        // Initialize page animations
+        document.addEventListener('DOMContentLoaded', function() {
+            anime.timeline({
+                easing: 'easeOutExpo',
+            })
+            .add({
+                targets: '#main-title',
+                opacity: [0, 1],
+                translateY: [30, 0],
+                duration: 800,
+            })
+            .add({
+                targets: '#subtitle',
+                opacity: [0, 1],
+                translateY: [20, 0],
+                duration: 600,
+            }, '-=400')
+            .add({
+                targets: '.glass-effect',
+                opacity: [0, 1],
+                translateY: [40, 0],
+                duration: 1000,
+                delay: anime.stagger(200),
+            }, '-=600');
+        });
+
+        // Payment Modal Functions
+        function showPaymentModal() {
+            document.getElementById('paymentModal').classList.remove('hidden');
+            initializeStripeElements();
+            
+            anime({
+                targets: '#paymentModal .glass-effect',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 400,
+                easing: 'easeOutBack',
+            });
+        }
+
+        function hidePaymentModal() {
+            anime({
+                targets: '#paymentModal .glass-effect',
+                scale: [1, 0.8],
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInBack',
+                complete: function() {
+                    document.getElementById('paymentModal').classList.add('hidden');
+                    if (elements) {
+                        elements.unmount();
+                    }
+                }
+            });
+        }
+
+        // Plan Modal Functions
+        function showPlanModal() {
+            document.getElementById('planModal').classList.remove('hidden');
+            
+            anime({
+                targets: '#planModal .glass-effect',
+                scale: [0.8, 1],
+                opacity: [0, 1],
+                duration: 400,
+                easing: 'easeOutBack',
+            });
+        }
+
+        function hidePlanModal() {
+            anime({
+                targets: '#planModal .glass-effect',
+                scale: [1, 0.8],
+                opacity: [1, 0],
+                duration: 300,
+                easing: 'easeInBack',
+                complete: function() {
+                    document.getElementById('planModal').classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize Stripe Elements
+        function initializeStripeElements() {
+            elements = stripe.elements();
+            
+            const cardElement = elements.create('cardNumber', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#1a202c',
+                        '::placeholder': {
+                            color: '#a0aec0',
+                        },
+                    },
+                },
+            });
+            cardElement.mount('#card-element');
+
+            const expiryElement = elements.create('cardExpiry', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#1a202c',
+                        '::placeholder': {
+                            color: '#a0aec0',
+                        },
+                    },
+                },
+            });
+            expiryElement.mount('#expiry-element');
+
+            const cvcElement = elements.create('cardCvc', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#1a202c',
+                        '::placeholder': {
+                            color: '#a0aec0',
+                        },
+                    },
+                },
+            });
+            cvcElement.mount('#cvc-element');
+
+            // Add focus styling
+            [cardElement, expiryElement, cvcElement].forEach(element => {
+                element.on('focus', function() {
+                    document.getElementById(element === cardElement ? 'card-element' : 
+                                         element === expiryElement ? 'expiry-element' : 'cvc-element').classList.add('focus');
+                });
+                element.on('blur', function() {
+                    document.getElementById(element === cardElement ? 'card-element' : 
+                                         element === expiryElement ? 'expiry-element' : 'cvc-element').classList.remove('focus');
+                });
+            });
+        }
+
+        // Handle Payment Form Submission
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = document.getElementById('submit-payment');
+            const paymentMessage = document.getElementById('payment-message');
+            
+            submitButton.classList.add('loading');
+            submitButton.textContent = 'Processing...';
+            
+            try {
+                // Create payment method
+                const { paymentMethod, error } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: elements.getElement('cardNumber'),
+                });
+                
+                if (error) {
+                    showPaymentMessage(error.message, 'error');
+                } else {
+                    // Simulate API call to update payment method
+                    setTimeout(() => {
+                        showPaymentMessage('Payment method updated successfully!', 'success');
+                        setTimeout(() => {
+                            hidePaymentModal();
+                        }, 2000);
+                    }, 1500);
+                }
+            } catch (error) {
+                showPaymentMessage('An error occurred. Please try again.', 'error');
+            } finally {
+                submitButton.classList.remove('loading');
+                submitButton.textContent = 'Update Card';
+            }
+        });
+
+        function showPaymentMessage(message, type) {
+            const paymentMessage = document.getElementById('payment-message');
+            paymentMessage.textContent = message;
+            paymentMessage.className = `mb-4 p-3 rounded-lg ${type === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`;
+            paymentMessage.classList.remove('hidden');
+            
+            if (type === 'success') {
+                paymentMessage.classList.add('success-animation');
+            }
+        }
+
+        // Plan Selection
+        function selectPlan(planType) {
+            // Simulate plan change
+            const modal = document.getElementById('planModal');
+            const planCards = modal.querySelectorAll('.glass-effect');
+            
+            // Add loading state
+            planCards.forEach(card => {
+                card.classList.add('loading');
+            });
+            
+            setTimeout(() => {
+                alert(`Successfully changed to ${planType} plan! You will be billed accordingly on your next billing cycle.`);
+                hidePlanModal();
+                
+                // Remove loading state
+                planCards.forEach(card => {
+                    card.classList.remove('loading');
+                });
+            }, 2000);
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('paymentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hidePaymentModal();
+            }
+        });
+
+        document.getElementById('planModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hidePlanModal();
+            }
+        });
+    </script>
+</body>
+</html>

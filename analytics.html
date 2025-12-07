@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - FinanceFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-indigo: #4C1D95;
+            --royal-purple: #7C3AED;
+            --soft-lavender: #A78BFA;
+            --light-periwinkle: #E0E7FF;
+            --charcoal: #374151;
+            --slate-gray: #64748B;
+            --success-green: #10B981;
+            --warning-amber: #F59E0B;
+            --error-red: #EF4444;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--light-periwinkle) 0%, #ffffff 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            background: rgba(124, 58, 237, 0.1);
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--deep-indigo), var(--royal-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(76, 29, 149, 0.2), 0 10px 10px -5px rgba(76, 29, 149, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--royal-purple), var(--soft-lavender));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3);
+        }
+        
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(167, 139, 250, 0.1));
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        
+        .anomaly-alert {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(248, 113, 113, 0.1));
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .forecast-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass-nav fixed w-full top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-8">
+                <h1 class="text-2xl font-bold gradient-text">FinanceFlow</h1>
+                <div class="hidden md:flex space-x-6">
+                    <a href="index.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Dashboard</a>
+                    <a href="expenses.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Expenses</a>
+                    <a href="clients.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Clients</a>
+                    <a href="invoices-ai-enhanced.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Invoices</a>
+                    <a href="reports.html" class="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-10">Reports</a>
+                    <a href="analytics.html" class="text-white font-medium px-3 py-2 rounded-lg bg-purple-600 bg-opacity-20">Analytics</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-lg hover:bg-purple-600 hover:bg-opacity-20 transition-colors">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3"></path>
+                    </svg>
+                </button>
+                <img src="resources/user-avatar.png" alt="User" class="w-10 h-10 rounded-full border-2 border-purple-400">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="pt-24 pb-8 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-4xl font-bold gradient-text mb-2">Advanced Analytics</h2>
+                    <p class="text-gray-600">Deep financial insights, forecasting, and AI-powered anomaly detection</p>
+                </div>
+                <button id="refreshAnalyticsBtn" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Metrics -->
+    <section class="px-6 mb-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="metric-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Profit Margin</h3>
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">68.4%</div>
+                    <div class="text-sm text-green-600 mt-2">+3.2% from last quarter</div>
+                </div>
+                
+                <div class="metric-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Cash Conversion</h3>
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">24 days</div>
+                    <div class="text-sm text-blue-600 mt-2">2 days faster</div>
+                </div>
+                
+                <div class="metric-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">Revenue Growth</h3>
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">+18.7%</div>
+                    <div class="text-sm text-purple-600 mt-2">Year over year</div>
+                </div>
+                
+                <div class="metric-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-gray-600">AI Confidence</h3>
+                        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">94.2%</div>
+                    <div class="text-sm text-amber-600 mt-2">Forecast accuracy</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Analytics -->
+    <section class="px-6 mb-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Profit & Loss Chart -->
+                <div class="lg:col-span-2">
+                    <div class="chart-container p-6 rounded-xl reveal">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-semibold text-gray-900">Profit & Loss Analysis</h3>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 text-sm bg-purple-100 text-purple-600 rounded-lg">6M</button>
+                                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">1Y</button>
+                                <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">2Y</button>
+                            </div>
+                        </div>
+                        <div id="profitLossChart" style="height: 350px;"></div>
+                    </div>
+                </div>
+                
+                <!-- Anomaly Detection -->
+                <div class="space-y-6">
+                    <div class="anomaly-alert p-6 rounded-xl reveal">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center mr-3">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900">Anomaly Alerts</h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-white bg-opacity-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-gray-900">Unusual Software Spending</span>
+                                    <span class="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">High</span>
+                                </div>
+                                <p class="text-sm text-gray-600">$2,400 spent on software this month (180% above average)</p>
+                                <p class="text-xs text-gray-500 mt-2">Dec 5, 2025</p>
+                            </div>
+                            
+                            <div class="bg-white bg-opacity-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-gray-900">Late Payment Pattern</span>
+                                    <span class="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded">Medium</span>
+                                </div>
+                                <p class="text-sm text-gray-600">Tech Startup payment 15 days late (usual: 3 days)</p>
+                                <p class="text-xs text-gray-500 mt-2">Dec 3, 2025</p>
+                            </div>
+                            
+                            <div class="bg-white bg-opacity-50 p-4 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-gray-900">Revenue Spike</span>
+                                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Low</span>
+                                </div>
+                                <p class="text-sm text-gray-600">Monthly revenue 45% above forecast</p>
+                                <p class="text-xs text-gray-500 mt-2">Dec 1, 2025</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Insights -->
+                    <div class="analytics-card p-6 rounded-xl reveal">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">AI Insights</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="w-2 h-2 bg-purple-600 rounded-full mt-2 mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Seasonal Pattern Detected</p>
+                                    <p class="text-xs text-gray-600">Q4 typically shows 23% higher expenses</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-2 h-2 bg-green-600 rounded-full mt-2 mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Optimization Opportunity</p>
+                                    <p class="text-xs text-gray-600">Reduce software costs by $340/month</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Growth Prediction</p>
+                                    <p class="text-xs text-gray-600">25% revenue growth expected next quarter</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Forecasting & Trends -->
+    <section class="px-6 mb-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Cash Flow Forecast -->
+                <div class="forecast-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900">Cash Flow Forecast</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Next 6 months</span>
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span class="text-xs text-green-600">Positive</span>
+                        </div>
+                    </div>
+                    <div id="cashFlowChart" style="height: 300px;"></div>
+                    
+                    <div class="mt-4 grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-2xl font-bold text-green-600">$18.5K</p>
+                            <p class="text-xs text-gray-600">Projected Cash</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-blue-600">$12.2K</p>
+                            <p class="text-xs text-gray-600">Avg Monthly</p>
+                        </div>
+                        <div>
+                            <p class="text-2xl font-bold text-purple-600">94%</p>
+                            <p class="text-xs text-gray-600">Confidence</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Expense Trends -->
+                <div class="analytics-card p-6 rounded-xl reveal">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900">Expense Trends</h3>
+                        <select id="trendPeriod" class="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="6m">6 Months</option>
+                            <option value="1y">1 Year</option>
+                            <option value="2y">2 Years</option>
+                        </select>
+                    </div>
+                    <div id="expenseTrendChart" style="height: 300px;"></div>
+                    
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Software</span>
+                            <span class="text-sm font-medium text-gray-900">+15.2%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Travel</span>
+                            <span class="text-sm font-medium text-gray-900">+8.7%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Marketing</span>
+                            <span class="text-sm font-medium text-gray-900">-3.1%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Dashboard Builder -->
+    <section class="px-6 mb-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="analytics-card p-6 rounded-xl reveal">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900">Custom Dashboard Builder</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Add Widget</button>
+                        <button class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700">Save Layout</button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Widget 1: Revenue vs Expenses -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Revenue vs Expenses</h4>
+                        <div class="h-32 bg-white rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                            <p class="text-gray-400 text-sm">Drag widget here</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Widget 2: Client Performance -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Client Performance</h4>
+                        <div class="h-32 bg-white rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                            <p class="text-gray-400 text-sm">Drag widget here</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Widget 3: Budget Tracker -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Budget Tracker</h4>
+                        <div class="h-32 bg-white rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                            <p class="text-gray-400 text-sm">Drag widget here</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-purple-50 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <svg class="w-5 h-5 text-purple-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <h4 class="text-sm font-medium text-purple-900">AI Dashboard Suggestions</h4>
+                    </div>
+                    <div class="text-sm text-purple-700 space-y-1">
+                        <p>• Add cash flow widget for better liquidity monitoring</p>
+                        <p>• Include expense ratio tracker for budget optimization</p>
+                        <p>• Consider adding client acquisition cost widget</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-gray-400">&copy; 2025 FinanceFlow. AI-powered financial management for freelancers.</p>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // Analytics page specific functionality
+        class AnalyticsPage {
+            constructor() {
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.initializeCharts();
+                this.setupScrollReveal();
+                this.loadAnalyticsData();
+            }
+            
+            setupEventListeners() {
+                // Refresh analytics button
+                document.getElementById('refreshAnalyticsBtn').addEventListener('click', () => {
+                    this.refreshAnalytics();
+                });
+                
+                // Trend period change
+                document.getElementById('trendPeriod').addEventListener('change', (e) => {
+                    this.updateExpenseTrends(e.target.value);
+                });
+                
+                // Anomaly alert clicks
+                document.querySelectorAll('.anomaly-alert').forEach(alert => {
+                    alert.addEventListener('click', () => {
+                        this.showAnomalyDetails();
+                    });
+                });
+            }
+            
+            initializeCharts() {
+                this.createProfitLossChart();
+                this.createCashFlowChart();
+                this.createExpenseTrendChart();
+            }
+            
+            createProfitLossChart() {
+                const chartElement = document.getElementById('profitLossChart');
+                if (!chartElement) return;
+                
+                const chart = echarts.init(chartElement);
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#7C3AED',
+                        borderWidth: 1,
+                        textStyle: {
+                            color: '#374151'
+                        }
+                    },
+                    legend: {
+                        data: ['Revenue', 'Expenses', 'Profit'],
+                        textStyle: {
+                            color: '#6B7280'
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#6B7280'
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: {
+                            lineStyle: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#6B7280',
+                            formatter: function(value) {
+                                return '$' + (value / 1000) + 'K';
+                            }
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#F3F4F6'
+                            }
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'Revenue',
+                            type: 'bar',
+                            data: [28000, 32000, 35000, 38000, 42000, 45000],
+                            itemStyle: {
+                                color: '#7C3AED'
+                            }
+                        },
+                        {
+                            name: 'Expenses',
+                            type: 'bar',
+                            data: [12000, 14000, 13000, 15000, 16000, 14250],
+                            itemStyle: {
+                                color: '#EF4444'
+                            }
+                        },
+                        {
+                            name: 'Profit',
+                            type: 'line',
+                            data: [16000, 18000, 22000, 23000, 26000, 30750],
+                            lineStyle: {
+                                color: '#10B981',
+                                width: 3
+                            },
+                            itemStyle: {
+                                color: '#10B981'
+                            }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                
+                window.addEventListener('resize', () => {
+                    chart.resize();
+                });
+            }
+            
+            createCashFlowChart() {
+                const chartElement = document.getElementById('cashFlowChart');
+                if (!chartElement) return;
+                
+                const chart = echarts.init(chartElement);
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        formatter: function(params) {
+                            return params[0].name + '<br/>' +
+                                   'Cash Flow: $' + params[0].value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#6B7280'
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: {
+                            lineStyle: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#6B7280',
+                            formatter: function(value) {
+                                return '$' + (value / 1000) + 'K';
+                            }
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#F3F4F6'
+                            }
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'Cash Flow',
+                            type: 'line',
+                            data: [15000, 18500, 12200, 19800, 16500, 18500],
+                            lineStyle: {
+                                color: '#10B981',
+                                width: 3
+                            },
+                            itemStyle: {
+                                color: '#10B981'
+                            },
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0,
+                                    y: 0,
+                                    x2: 0,
+                                    y2: 1,
+                                    colorStops: [
+                                        { offset: 0, color: 'rgba(16, 185, 129, 0.3)' },
+                                        { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                
+                window.addEventListener('resize', () => {
+                    chart.resize();
+                });
+            }
+            
+            createExpenseTrendChart() {
+                const chartElement = document.getElementById('expenseTrendChart');
+                if (!chartElement) return;
+                
+                const chart = echarts.init(chartElement);
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    legend: {
+                        data: ['Software', 'Travel', 'Marketing', 'Equipment'],
+                        textStyle: {
+                            color: '#6B7280'
+                        }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                        axisLine: {
+                            lineStyle: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#6B7280'
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: {
+                            lineStyle: {
+                                color: '#E5E7EB'
+                            }
+                        },
+                        axisLabel: {
+                            color: '#6B7280',
+                            formatter: function(value) {
+                                return '$' + value;
+                            }
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                color: '#F3F4F6'
+                            }
+                        }
+                    },
+                    series: [
+                        {
+                            name: 'Software',
+                            type: 'bar',
+                            stack: 'expenses',
+                            data: [1200, 1400, 1300, 1500, 1600, 1240],
+                            itemStyle: {
+                                color: '#7C3AED'
+                            }
+                        },
+                        {
+                            name: 'Travel',
+                            type: 'bar',
+                            stack: 'expenses',
+                            data: [800, 900, 850, 950, 1000, 890],
+                            itemStyle: {
+                                color: '#A78BFA'
+                            }
+                        },
+                        {
+                            name: 'Marketing',
+                            type: 'bar',
+                            stack: 'expenses',
+                            data: [400, 450, 420, 480, 500, 650],
+                            itemStyle: {
+                                color: '#F59E0B'
+                            }
+                        },
+                        {
+                            name: 'Equipment',
+                            type: 'bar',
+                            stack: 'expenses',
+                            data: [600, 700, 650, 750, 800, 450],
+                            itemStyle: {
+                                color: '#10B981'
+                            }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                
+                window.addEventListener('resize', () => {
+                    chart.resize();
+                });
+            }
+            
+            loadAnalyticsData() {
+                // Simulate loading analytics data
+                setTimeout(() => {
+                    this.updateMetrics();
+                }, 1000);
+            }
+            
+            updateMetrics() {
+                // Animate metric updates
+                const metrics = document.querySelectorAll('.metric-card .text-3xl');
+                metrics.forEach((metric, index) => {
+                    setTimeout(() => {
+                        anime({
+                            targets: metric,
+                            scale: [1, 1.1, 1],
+                            duration: 600,
+                            easing: 'easeOutElastic(1, .8)'
+                        });
+                    }, index * 200);
+                });
+            }
+            
+            refreshAnalytics() {
+                // Show loading state
+                const button = document.getElementById('refreshAnalyticsBtn');
+                const originalText = button.innerHTML;
+                
+                button.innerHTML = `
+                    <svg class="w-5 h-5 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refreshing...
+                `;
+                button.disabled = true;
+                
+                // Simulate refresh
+                setTimeout(() => {
+                    this.initializeCharts();
+                    this.updateMetrics();
+                    
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    
+                    this.showSuccessMessage('Analytics data refreshed successfully!');
+                }, 2000);
+            }
+            
+            updateExpenseTrends(period) {
+                // Update expense trend chart based on selected period
+                this.createExpenseTrendChart();
+            }
+            
+            showAnomalyDetails() {
+                // Show detailed anomaly information
+                this.showSuccessMessage('Anomaly details panel opened');
+            }
+            
+            setupScrollReveal() {
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('active');
+                        }
+                    });
+                }, observerOptions);
+                
+                document.querySelectorAll('.reveal').forEach(el => {
+                    observer.observe(el);
+                });
+            }
+            
+            showSuccessMessage(message) {
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                toast.textContent = message;
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                
+                document.body.appendChild(toast);
+                
+                anime({
+                    targets: toast,
+                    opacity: [0, 1],
+                    translateX: ['100%', '0%'],
+                    duration: 300,
+                    easing: 'easeOutQuart',
+                    complete: () => {
+                        setTimeout(() => {
+                            anime({
+                                targets: toast,
+                                opacity: [1, 0],
+                                translateX: ['0%', '100%'],
+                                duration: 300,
+                                easing: 'easeInQuart',
+                                complete: () => {
+                                    toast.remove();
+                                }
+                            });
+                        }, 3000);
+                    }
+                });
+            }
+        }
+        
+        // Initialize analytics page
+        document.addEventListener('DOMContentLoaded', () => {
+            new AnalyticsPage();
+        });
+    </script>
+</body>
+</html>
