@@ -782,18 +782,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.financeFlow = new FinanceFlow();
 });
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FinanceFlow;
-}	// Settings page functionality
-	initializeSettingsPage() {
-		// Initialize settings page specific features
-		this.setupSettingsAnimations();
-		this.setupProfileFormHandlers();
-		this.setupPreferenceHandlers();
-	}
-	
-	setupSettingsAnimations() {
 		// Animate settings cards on load
 		const settingsCards = document.querySelectorAll('.glass-effect');
 		if (settingsCards.length > 0) {
@@ -1006,3 +994,16 @@ if (typeof module !== 'undefined' && module.exports) {
             }, 300);
         }, 3000);
     }
+    }   // ← this closes the FinanceFlow class
+
+}   // ← this closes the class FinanceFlow { ... }
+
+// Initialize FinanceFlow when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.financeFlow = new FinanceFlow();
+});
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FinanceFlow;
+}
