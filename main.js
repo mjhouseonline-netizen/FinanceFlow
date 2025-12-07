@@ -776,7 +776,6 @@ class FinanceFlow {
             mobileMenu.classList.toggle('hidden');
         }
     }
-}
 
 }   // closes FinanceFlow class
 
