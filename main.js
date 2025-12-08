@@ -21,8 +21,27 @@ class FinanceFlow {
     this.setupEventListeners();
     this.initializeAnimations();
     this.initializeCharts();
-    this.setupScrollReveal();        // now simplified
+    this.setupScrollReveal();
     this.startTypewriterEffect();
+    this.fetchDashboard();          // ← NEW: load real numbers
+  }
+
+  /* ----------  DASHBOARD DATA  ---------- */
+  async fetchDashboard() {
+    try {
+      const res = await fetch('https://financeflow-api.onrender.com/api/dashboard');
+      const data = await res.json();
+      // update metric cards
+      const el = id => document.getElementById(id);
+      if (el('totalRevenue')) el('totalRevenue').textContent = `$${data.revenue.toLocaleString()}`;
+      if (el('activeSubs')) el('activeSubs').textContent = data.subscriptions;
+      if (el('outstanding')) el('outstanding').textContent = `$${data.outstanding.toLocaleString()}`;
+      if (el('budgetUsed')) el('budgetUsed').textContent = `${data.budgetPercent}%`;
+      if (el('taxDeductible')) el('taxDeductible').textContent = `$${data.taxDeductible.toLocaleString()}`;
+    } catch (e) {
+      console.warn('Dashboard fetch failed', e);
+      // keep static fallback numbers
+    }
   }
 
   /* ----------  EVENTS  ---------- */
@@ -111,24 +130,21 @@ class FinanceFlow {
 
   /* ----------  REVEAL (SIMPLIFIED)  ---------- */
   setupScrollReveal() {
-    // instantly show everything instead of waiting for scroll
     document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
   }
 
   /* ----------  TYPEWRITER  ---------- */
   startTypewriterEffect() {
-    document.querySelectorAll('.typewriter').forEach((el, i) => {
-      setTimeout(() => this.typeWriter(el), i * 2000);
-    });
+    document.querySelectorAll('.typewriter').forEach((el, i) => setTimeout(() => this.typeWriter(el), i * 2000));
   }
   typeWriter(element) {
     const text = element.textContent;
     element.textContent = '';
     element.style.borderRight = '2px solid #7C3AED';
     let i = 0;
-    const typeInterval = setInterval(() => {
-      if (i < text.length) { element.textContent += text.charAt(i++); }
-      else { clearInterval(typeInterval); setTimeout(() => element.style.borderRight = 'none', 1000); }
+    const intv = setInterval(() => {
+      if (i < text.length) element.textContent += text.charAt(i++);
+      else { clearInterval(intv); setTimeout(() => element.style.borderRight = 'none', 1000); }
     }, 50);
   }
 
@@ -137,9 +153,7 @@ class FinanceFlow {
     const action = e.currentTarget.dataset.action;
     switch (action) {
       case 'add-expense': this.showAddExpenseModal(); break;
-      case 'create-invoice': /* placeholder */ break;
       case 'view-reports': window.location.href = 'reports.html'; break;
-      case 'ai-insights': /* placeholder */ break;
     }
   }
 
