@@ -261,4 +261,114 @@ class FinanceFlow {
       <div class="flex items-center">
         <div class="w-10 h-10 ${catColors[expense.category] || catColors.Other} rounded-lg flex items-center justify-center mr-3"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg></div>
         <div><p class="font-medium text-gray-900">${expense.description}</p><p class="text-sm text-gray-500">${expense.category} • ${expense.date}</p></div>
-      </
+      </div>
+      <div class="text-right"><p class="font-semibold text-gray-900">$${expense.amount.toFixed(2)}</p>${expense.taxDeductible ? '<p class="text-xs text-green-600">Tax deductible</p>' : ''}</div>`;
+    return div;
+  }
+
+  /* ----------  AI  ---------- */
+  handleAISuggestion(e) {
+    const suggestion = e.currentTarget.textContent;
+    const response = this.generateAIResponse(suggestion);
+    this.displayAIResponse(response);
+  }
+  generateAIResponse(query) {
+    const map = {
+      '• Show tax-deductible expenses': 'You have $8,940 in tax-deductible expenses this year, potentially saving you $2,235 in taxes.',
+      '• Budget optimization tips': 'Consider reducing marketing spend by 20% and reallocating to software tools for better ROI.',
+      '• Cash flow forecast': 'Based on current trends, your cash flow will remain positive with $15,000 projected for next month.'
+    };
+    return map[query] || 'I\'m analyzing your financial data to provide personalized insights.';
+  }
+  displayAIResponse(response) {
+    const container = document.querySelector('.ai-bubble .space-y-4');
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'bg-purple-50 p-4 rounded-lg';
+    div.innerHTML = `<p class="text-sm text-gray-700">${response}</p>`;
+    container.appendChild(div);
+    anime({ targets: div, opacity: [0, 1], translateY: [20, 0], duration: 400, easing: 'easeOutQuart' });
+  }
+
+  /* ----------  CHART PERIOD  ---------- */
+  changeChartPeriod(e) {
+    document.querySelectorAll('.chart-period-btn').forEach(btn => {
+      btn.classList.remove('bg-purple-100', 'text-purple-600');
+      btn.classList.add('text-gray-600', 'hover:bg-gray-100');
+    });
+    e.currentTarget.classList.add('bg-purple-100', 'text-purple-600');
+    e.currentTarget.classList.remove('text-gray-600', 'hover:bg-gray-100');
+    this.updateChartData(e.currentTarget.textContent);
+  }
+  updateChartData(period) {
+    const chart = echarts.getInstanceByDom(document.getElementById('expenseChart'));
+    if (!chart) return;
+    let data, categories;
+    switch (period) {
+      case '7D': categories = ['Dec 1', 'Dec 2', 'Dec 3', 'Dec 4', 'Dec 5', 'Dec 6', 'Dec 7']; data = [120, 200, 150, 80, 70, 110, 130]; break;
+      case '30D': categories = ['Week 1', 'Week 2', 'Week 3', 'Week 4']; data = [850, 1200, 950, 1100]; break;
+      case '90D': categories = ['Oct', 'Nov', 'Dec']; data = [3200, 3800, 4100]; break;
+    }
+    chart.setOption({ xAxis: { data: categories }, series: [{ data: data }] });
+  }
+
+  /* ----------  UTILS  ---------- */
+  formatCurrency(amount) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount); }
+  formatDate(date) { return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(date)); }
+  toggleMobileMenu() { document.querySelector('.mobile-menu')?.classList.toggle('hidden'); }
+
+  /* ----------  SETTINGS (inside class)  ---------- */
+  initializeSettingsPage() {
+    this.setupSettingsAnimations();
+    this.setupProfileFormHandlers();
+    this.setupPreferenceHandlers();
+  }
+  setupSettingsAnimations() {
+    const cards = document.querySelectorAll('.glass-effect');
+    if (cards.length) anime({ targets: cards, opacity: [0, 1], translateY: [30, 0], duration: 800, delay: anime.stagger(200), easing: 'easeOutExpo' });
+  }
+  setupProfileFormHandlers() {
+    const form = document.querySelector('form');
+    if (!form) return;
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.addEventListener('click', e => { e.preventDefault(); this.handleProfileUpdate(); });
+  }
+  setupPreferenceHandlers() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(toggle =>
+      toggle.addEventListener('change', e => this.handlePreferenceChange(e.target))
+    );
+  }
+  handleProfileUpdate() {
+    const btn = event.target; const orig = btn.textContent;
+    btn.classList.add('loading'); btn.textContent = 'Updating...';
+    setTimeout(() => {
+      this.showSettingsNotification('Profile updated successfully!', 'success');
+      btn.classList.remove('loading'); btn.textContent = orig;
+    }, 1500);
+  }
+  handlePreferenceChange(toggle) {
+    const pref = toggle.closest('.flex');
+    const label = pref.querySelector('h3').textContent;
+    const on = toggle.checked;
+    this.showSettingsNotification(`${label} ${on ? 'enabled' : 'disabled'}`, 'info');
+    setTimeout(() => console.log(`Preference ${label} set to ${on}`), 500);
+  }
+  showSettingsNotification(message, type = 'info') {
+    const note = document.createElement('div');
+    note.className = `fixed top-20 right-6 z-50 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 ${type === 'success' ? 'bg-green-500 text-white' : type === 'error' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`;
+    note.textContent = message;
+    document.body.appendChild(note);
+    setTimeout(() => note.classList.remove('translate-x-full'), 100);
+    setTimeout(() => { note.classList.add('translate-x-full'); setTimeout(() => note.remove(), 300); }, 3000);
+  }
+} // end class
+
+/* ----------  BOOTSTRAP  ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  window.financeFlow = new FinanceFlow();
+});
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = FinanceFlow;
+}
