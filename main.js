@@ -23,7 +23,8 @@ class FinanceFlow {
     this.initializeCharts();
     this.setupScrollReveal();
     this.startTypewriterEffect();
-    this.fetchDashboard();          // load real Stripe numbers
+    this.fetchDashboard();
+    this.setupPlanButtons();   // NEW: handle 3 plans
   }
 
   /* ----------  DASHBOARD FETCH  ---------- */
@@ -39,7 +40,37 @@ class FinanceFlow {
       if (el('taxDeductible')) el('taxDeductible').textContent = `$${data.taxDeductible.toLocaleString()}`;
     } catch (e) {
       console.warn('Dashboard fetch failed', e);
-      // keeps static fallback numbers
+    }
+  }
+
+  /* ----------  3-PLAN + STRIPE  ---------- */
+  setupPlanButtons() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const plan = urlParams.get('plan'); // pro / enterprise / null (free)
+
+    if (plan === 'pro') {
+      const btn = document.getElementById('upgradeProBtn');
+      if (btn) btn.addEventListener('click', () => this.startCheckout('price_1XXXXXXXXXX')); // <-- your Pro Price ID
+    }
+    if (plan === 'enterprise') {
+      const btn = document.getElementById('upgradeEntBtn');
+      if (btn) btn.addEventListener('click', () => alert('Redirecting to Calendly...')); // or Calendly link
+    }
+  }
+
+  /* ----------  STRIPE CHECKOUT  ---------- */
+  async startCheckout(priceId) {
+    try {
+      const res = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId })
+      });
+      const { url } = await res.json();
+      window.location = url; // redirect to Stripe Checkout
+    } catch (e) {
+      console.error('Checkout error', e);
+      alert('Could not start checkout');
     }
   }
 
@@ -57,10 +88,6 @@ class FinanceFlow {
                                .find(btn => btn.textContent.includes('Add Expense'));
     if (addExpenseBtn) addExpenseBtn.addEventListener('click', () => this.showAddExpenseModal());
 
-    // NEW: Stripe Checkout button
-    const upgradeBtn = document.getElementById('upgradeBtn');
-    if (upgradeBtn) upgradeBtn.addEventListener('click', () => this.startCheckout(process.env.STRIPE_PRICE_ID || 'price_1XXXXXXXXXX'));
-
     document.querySelectorAll('.ai-suggestion-btn').forEach(btn =>
       btn.addEventListener('click', e => this.handleAISuggestion(e))
     );
@@ -68,22 +95,6 @@ class FinanceFlow {
     document.querySelectorAll('.chart-period-btn').forEach(btn =>
       btn.addEventListener('click', e => this.changeChartPeriod(e))
     );
-  }
-
-  /* ----------  STRIPE CHECKOUT  ---------- */
-  async startCheckout(priceId) {
-    try {
-      const res = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId })
-      });
-      const { url } = await res.json();
-      window.location = url; // redirect to Stripe Checkout
-    } catch (e) {
-      console.error('Checkout error', e);
-      alert('Could not start checkout');
-    }
   }
 
   /* ----------  ANIMATIONS  ---------- */

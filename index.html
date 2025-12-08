@@ -161,7 +161,7 @@
       </div>
     </div>
   </section>
-<button id="upgradeBtn" class="btn-primary text-white px-6 py-2 rounded-lg mt-4">Upgrade to Pro</button>
+
   <!-- Key Metrics (IDs wired to JS) -->
   <section class="px-6 mb-12">
     <div class="max-w-7xl mx-auto">
@@ -205,6 +205,53 @@
     </div>
   </section>
 
+  <!-- 3-Plan Picker (NEW) -->
+  <section class="px-6 mb-12">
+    <div class="max-w-5xl mx-auto">
+      <h2 class="text-3xl font-bold text-center gradient-text mb-8 reveal">Choose Your Plan</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Free -->
+        <div class="metric-card p-6 rounded-xl text-center card-hover reveal">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">Free</h3>
+          <div class="text-3xl font-bold text-purple-600 mb-1">$0</div>
+          <div class="text-sm text-gray-500 mb-4">/ month</div>
+          <ul class="text-sm text-gray-600 space-y-2 mb-6">
+            <li>✓ Basic expense tracking</li>
+            <li>✓ Manual reports</li>
+            <li>✗ No AI insights</li>
+          </ul>
+          <button onclick="selectPlan('free')" class="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors">Current Plan</button>
+        </div>
+
+        <!-- Pro -->
+        <div class="metric-card p-6 rounded-xl text-center card-hover reveal border-2 border-purple-400">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">Pro</h3>
+          <div class="text-3xl font-bold text-purple-600 mb-1">$19</div>
+          <div class="text-sm text-gray-500 mb-4">/ month</div>
+          <ul class="text-sm text-gray-600 space-y-2 mb-6">
+            <li>✓ AI expense insights</li>
+            <li>✓ Advanced reports</li>
+            <li>✓ Tax optimisation</li>
+          </ul>
+          <button id="upgradeProBtn" onclick="selectPlan('pro')" class="w-full btn-primary text-white py-2 rounded-lg">Upgrade to Pro</button>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="metric-card p-6 rounded-xl text-center card-hover reveal">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">Enterprise</h3>
+          <div class="text-3xl font-bold text-purple-600 mb-1">$49</div>
+          <div class="text-sm text-gray-500 mb-4">/ month</div>
+          <ul class="text-sm text-gray-600 space-y-2 mb-6">
+            <li>✓ Unlimited everything</li>
+            <li>✓ Priority support</li>
+            <li>✓ Custom integrations</li>
+          </ul>
+          <button id="upgradeEntBtn" onclick="selectPlan('enterprise')" class="w-full bg-gray-900 text-white py-2 rounded-lg hover:bg-gray-800 transition-colors">Contact Sales</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Main Content -->
   <section class="px-6 mb-12">
     <div class="max-w-7xl mx-auto">
@@ -233,91 +280,4 @@
             </div>
             <div class="space-y-4">
               <div class="bg-white bg-opacity-50 p-4 rounded-lg"><p class="text-sm text-gray-700 typewriter">How much did I spend on software this month?</p></div>
-              <div class="bg-purple-50 p-4 rounded-lg"><p class="text-sm text-gray-700">You've spent $1,240 on software this month, which is 15% under budget. Great job!</p></div>
-              <div class="space-y-2">
-                <button class="ai-suggestion-btn w-full text-left text-sm text-gray-600 hover:text-purple-600 p-2 rounded-lg hover:bg-purple-50 transition-colors">• Show tax-deductible expenses</button>
-                <button class="ai-suggestion-btn w-full text-left text-sm text-gray-600 hover:text-purple-600 p-2 rounded-lg hover:bg-purple-50 transition-colors">• Budget optimization tips</button>
-                <button class="ai-suggestion-btn w-full text-left text-sm text-gray-600 hover:text-purple-600 p-2 rounded-lg hover:bg-purple-50 transition-colors">• Cash flow forecast</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Budget Progress -->
-  <section class="px-6 mb-12">
-    <div class="max-w-7xl mx-auto">
-      <div class="metric-card p-6 rounded-xl reveal">
-        <h3 class="text-xl font-semibold text-gray-900 mb-6">Budget Progress</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-gray-600">Software</span><span class="text-sm text-gray-500">$1,240 / $1,500</span></div>
-            <div class="w-full bg-gray-200 rounded-full h-2"><div class="progress-bar w-4/5 h-2 rounded-full"></div></div>
-          </div>
-          <div>
-            <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-gray-600">Travel</span><span class="text-sm text-gray-500">$890 / $1,200</span></div>
-            <div class="w-full bg-gray-200 rounded-full h-2"><div class="progress-bar w-3/4 h-2 rounded-full"></div></div>
-          </div>
-          <div>
-            <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-gray-600">Marketing</span><span class="text-sm text-red-500">$650 / $500</span></div>
-            <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-red-500 w-full h-2 rounded-full"></div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Recent Activity -->
-  <section class="px-6 mb-12">
-    <div class="max-w-7xl mx-auto">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Recent Expenses -->
-        <div class="metric-card p-6 rounded-xl reveal">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-semibold text-gray-900">Recent Expenses</h3>
-            <button class="text-purple-600 hover:text-purple-700 text-sm font-medium">View All</button>
-          </div>
-          <div class="space-y-4" id="recentExpensesList">
-            <!-- JS injects rows here -->
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="metric-card p-6 rounded-xl reveal">
-          <h3 class="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h3>
-          <div class="grid grid-cols-2 gap-4">
-            <button class="quick-action-btn p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-center" data-action="add-expense">
-              <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-2"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg></div>
-              <p class="text-sm font-medium text-gray-900">Add Expense</p>
-            </button>
-            <button class="quick-action-btn p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-center" data-action="create-invoice">
-              <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-2"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg></div>
-              <p class="text-sm font-medium text-gray-900">Create Invoice</p>
-            </button>
-            <button class="quick-action-btn p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-center" data-action="view-reports">
-              <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mx-auto mb-2"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg></div>
-              <p class="text-sm font-medium text-gray-900">View Reports</p>
-            </button>
-            <button class="quick-action-btn p-4 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors text-center" data-action="ai-insights">
-              <div class="w-12 h-12 bg-amber-600 rounded-lg flex items-center justify-center mx-auto mb-2"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0118 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg></div>
-              <p class="text-sm font-medium text-gray-900">AI Insights</p>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="bg-gray-900 text-white py-8 px-6">
-    <div class="max-w-7xl mx-auto text-center">
-      <p class="text-gray-400">&copy; 2025 FinanceFlow. AI-powered financial management for freelancers.</p>
-    </div>
-  </footer>
-
-  <!-- Scripts -->
-  <script src="main.js"></script>
-</body>
-</html>
+              <div class="bg-purple-50 p-4 rounded-lg">

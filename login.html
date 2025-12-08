@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FinanceFlow - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>body{font-family:'Inter',sans-serif;background:#f3f4f6}</style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+    <h1 class="text-2xl font-bold text-center text-purple-700 mb-2">FinanceFlow</h1>
+    <p class="text-center text-gray-500 mb-6">Choose your plan to continue</p>
+
+    <!-- 3 Plans -->
+    <div class="space-y-4">
+      <button onclick="selectPlan('free')" class="w-full p-4 border rounded-xl hover:bg-purple-50 text-left">
+        <div class="font-semibold text-gray-800">Free</div>
+        <div class="text-sm text-gray-500">$0 / month • Basic expense tracking</div>
+      </button>
+
+      <button onclick="selectPlan('pro')" class="w-full p-4 border rounded-xl hover:bg-purple-50 text-left">
+        <div class="font-semibold text-gray-800">Pro</div>
+        <div class="text-sm text-gray-500">$19 / month • AI insights & reports</div>
+      </button>
+
+      <button onclick="selectPlan('enterprise')" class="w-full p-4 border rounded-xl hover:bg-purple-50 text-left">
+        <div class="font-semibold text-gray-800">Enterprise</div>
+        <div class="text-sm text-gray-500">$49 / month • Unlimited + priority support</div>
+      </button>
+    </div>
+
+    <!-- Continue -->
+    <button id="continueBtn" disabled class="mt-6 w-full bg-purple-600 text-white py-2 rounded-lg opacity-50 cursor-not-allowed">Continue</button>
+  </div>
+
+  <script>
+    let selected = '';
+    function selectPlan(plan) {
+      selected = plan;
+      document.getElementById('continueBtn').disabled = false;
+      document.getElementById('continueBtn').classList.remove('opacity-50','cursor-not-allowed');
+    }
+    document.getElementById('continueBtn').addEventListener('click', () => {
+      if (selected === 'free') {
+        window.location = 'index.html';
+      } else {
+        window.location = `index.html?plan=${selected}`;
+      }
+    });
+  </script>
+</body>
+</html>
