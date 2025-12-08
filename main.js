@@ -30,7 +30,7 @@ class FinanceFlow {
   /* ----------  DASHBOARD FETCH  ---------- */
   async fetchDashboard() {
     try {
-      const res = await fetch('https://financeflow-api.onrender.com/api/dashboard');
+      const res = await fetch('https://financeflow-1sk6.onrender.com/api/dashboard');
       const data = await res.json();
       const el = id => document.getElementById(id);
       if (el('totalRevenue')) el('totalRevenue').textContent = `$${data.revenue.toLocaleString()}`;
