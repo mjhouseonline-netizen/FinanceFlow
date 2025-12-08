@@ -9,11 +9,15 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 
 // CORS - allow your frontend
+const cors = require('cors');
+
 const corsOptions = {
   origin: ['https://financeflow.skillsoul.store', 'http://localhost:5500'],
-  credentials: true
+  credentials: true,
 };
+
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // for preflight
 app.use(express.json());
 app.use('/api/webhook', express.raw({ type: 'application/json' })); // raw body for Stripe
 
