@@ -206,57 +206,74 @@
     </div>
   </section>
 
-  <!-- 3-Plan Picker (ADD THIS SECTION) -->
-  <section class="px-6 mb-12">
-    <div class="max-w-5xl mx-auto">
-      <h2 class="text-3xl font-bold text-center gradient-text mb-8 reveal">Choose Your Plan</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Free/Starter Plan -->
-        <div class="metric-card p-6 rounded-xl text-center card-hover reveal">
-          <h3 class="text-xl font-semibold text-gray-800 mb-2">Starter</h3>
-          <div class="text-3xl font-bold text-purple-600 mb-1">$0</div>
-          <div class="text-sm text-gray-500 mb-4">/ month</div>
-          <ul class="text-sm text-gray-600 space-y-2 mb-6">
-            <li>✓ Basic expense tracking</li>
-            <li>✓ Manual reports</li>
-            <li>✓ Up to 10 clients</li>
-            <li>✗ No AI insights</li>
-          </ul>
-          <button onclick="selectPlan('starter')" class="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors">Current Plan</button>
-        </div>
+ <!-- 3-Plan Picker -->
+<section class="px-6 mb-12">
+  <div class="max-w-5xl mx-auto">
+    <h2 class="text-3xl font-bold text-center gradient-text mb-8 reveal">
+      Choose Your Plan
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Starter Plan -->
+      <div class="metric-card p-6 rounded-xl text-center card-hover reveal">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Starter</h3>
+        <div class="text-3xl font-bold text-purple-600 mb-1">$0</div>
+        <div class="text-sm text-gray-500 mb-4">/ month</div>
+        <ul class="text-sm text-gray-600 space-y-2 mb-6">
+          <li>✓ Basic expense tracking</li>
+          <li>✓ Manual reports</li>
+          <li>✓ Up to 10 clients</li>
+          <li>✗ No AI insights</li>
+        </ul>
+        <button
+          data-plan="starter"
+          class="w-full bg-gray-200 text-gray-800 py-2.5 rounded-lg font-medium border border-gray-200 hover:bg-gray-300 transition-all"
+        >
+          Current Plan
+        </button>
+      </div>
 
-        <!-- Professional Plan -->
-        <div class="metric-card p-6 rounded-xl text-center card-hover reveal border-2 border-purple-400">
-          <h3 class="text-xl font-semibold text-gray-800 mb-2">Professional</h3>
-          <div class="text-3xl font-bold text-purple-600 mb-1">$29</div>
-          <div class="text-sm text-gray-500 mb-4">/ month</div>
-          <ul class="text-sm text-gray-600 space-y-2 mb-6">
-            <li>✓ AI expense insights</li>
-            <li>✓ Advanced reports</li>
-            <li>✓ Tax optimisation</li>
-            <li>✓ Unlimited clients</li>
-          </ul>
-          <button id="upgradeProBtn" onclick="selectPlan('professional')" class="w-full btn-primary text-white py-2 rounded-lg">Upgrade to Pro</button>
-        </div>
+      <!-- Professional Plan -->
+      <div class="metric-card p-6 rounded-xl text-center card-hover reveal border-2 border-purple-400">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Professional</h3>
+        <div class="text-3xl font-bold text-purple-600 mb-1">$29</div>
+        <div class="text-sm text-gray-500 mb-4">/ month</div>
+        <ul class="text-sm text-gray-600 space-y-2 mb-6">
+          <li>✓ AI expense insights</li>
+          <li>✓ Advanced reports</li>
+          <li>✓ Tax optimisation</li>
+          <li>✓ Unlimited clients</li>
+        </ul>
+        <button
+          id="upgradeProBtn"
+          data-plan="professional"
+          class="w-full py-2.5 rounded-lg font-medium border border-purple-500 bg-purple-600 text-white hover:bg-purple-700 transition-all"
+        >
+          Upgrade to Pro
+        </button>
+      </div>
 
-        <!-- Enterprise Plan -->
-        <div class="metric-card p-6 rounded-xl text-center card-hover reveal">
-          <h3 class="text-xl font-semibold text-gray-800 mb-2">Enterprise</h3>
-          <div class="text-3xl font-bold text-purple-600 mb-1">$99</div>
-          <div class="text-sm text-gray-500 mb-4">/ month</div>
-          <ul class="text-sm text-gray-600 space-y-2 mb-6">
-            <li>✓ Unlimited everything</li>
-            <li>✓ Priority support</li>
-            <li>✓ Custom integrations</li>
-            <li>✓ Advanced analytics</li>
-          </ul>
-         <button id="upgradeEntBtn" onclick="selectPlan('enterprise')" class="w-full ...">
-  Upgrade to Enterprise
-</button>
-        </div>
+      <!-- Enterprise Plan -->
+      <div class="metric-card p-6 rounded-xl text-center card-hover reveal">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Enterprise</h3>
+        <div class="text-3xl font-bold text-purple-600 mb-1">$99</div>
+        <div class="text-sm text-gray-500 mb-4">/ month</div>
+        <ul class="text-sm text-gray-600 space-y-2 mb-6">
+          <li>✓ Unlimited everything</li>
+          <li>✓ Priority support</li>
+          <li>✓ Custom integrations</li>
+          <li>✓ Advanced analytics</li>
+        </ul>
+        <button
+          id="upgradeEntBtn"
+          data-plan="enterprise"
+          class="w-full py-2.5 rounded-lg font-medium border border-gray-200 text-gray-800 hover:border-purple-400 hover:bg-purple-50 transition-all"
+        >
+          Upgrade to Enterprise
+        </button>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- Main Content -->
   <section class="px-6 mb-12">
@@ -318,7 +335,5 @@
       <p class="text-gray-400">&copy; 2025 FinanceFlow. AI-powered financial management for freelancers.</p>
     </div>
   </footer>
-
-  <script src="main.js"></script>
 </body>
 </html>
