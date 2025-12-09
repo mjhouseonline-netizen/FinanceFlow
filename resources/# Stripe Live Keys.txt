@@ -1,0 +1,16 @@
+# Stripe Live Keys
+STRIPE_SECRET_KEY=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
+STRIPE_PUBLISHABLE_KEY=pk_live_51SNsiAFj4r8OeJwWS80OMbQ490t8dLA3j28LrurfYfrOfdca5HhXwv1Ml5DZ5Gx0TtyMYOjzdMstG0mrQh6aqQhY00oVV3yC6J
+STRIPE_WEBHOOK_SECRET=whsec_YnhHr9tTHD9DsF1nm5DlHJFCudqDFRcO
+
+# Price IDs (from Stripe dashboard)
+STRIPE_STARTER_PRICE_ID=price_1SbZFqFj4r8OeJwWBlvD7LFZ
+STRIPE_PROFESSIONAL_PRICE_ID=price_1SbZHFFj4r8OeJwWnKSUaDiu
+STRIPE_ENTERPRISE_PRICE_ID=price_1SbZHlFj4r8OeJwWRWXPpTUu
+
+# Domain Configuration
+DOMAIN=https://financeflow.skillsoul.store
+
+# Server Configuration
+PORT=4000
+NODE_ENV=production

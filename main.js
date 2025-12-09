@@ -23,56 +23,98 @@ class FinanceFlow {
     this.initializeCharts();
     this.setupScrollReveal();
     this.startTypewriterEffect();
-    this.fetchDashboard();
-    this.setupPlanButtons();   // NEW: handle 3 plans
+    this.fetchDashboard();          // live counts from Stripe
+    this.setupPlanButtons();        // 3-plan + Stripe
   }
 
-  /* ----------  DASHBOARD FETCH  ---------- */
-  async fetchDashboard() {
+/* ----------  LIVE DASHBOARD FETCH  ---------- */
+async function fetchDashboard() {
+  try {
+    const res = await fetch('https://financeflow-1sk6.onrender.com/api/dashboard');
+    const data = await res.json();
+    const el = id => document.getElementById(id);
+    if (el('totalRevenue')) el('totalRevenue').textContent = `$${data.revenue.toLocaleString()}`;
+    if (el('activeSubs')) el('activeSubs').textContent = data.subscriptions;
+    if (el('outstanding')) el('outstanding').textContent = `$${data.outstanding.toLocaleString()}`;
+    if (el('budgetUsed')) el('budgetUsed').textContent = `${data.budgetPercent}%`;
+    if (el('taxDeductible')) el('taxDeductible').textContent = `$${data.taxDeductible.toLocaleString()}`;
+  } catch (e) {
+    console.warn('Dashboard fetch failed', e);
+  }
+}
+
+/* ----------  WEBHOOK HEALTH CHECK  ---------- */
+async function checkWebhookHealth() {
+  try {
+    const res = await fetch('https://financeflow-1sk6.onrender.com/api/health');
+    const data = await res.json();
+    console.log('Webhook status:', data.webhook);
+  } catch (e) {
+    console.warn('Health check failed', e);
+  }
+}
+
+// Check webhook health on page load
+document.addEventListener('DOMContentLoaded', () => {
+  checkWebhookHealth();
+  fetchDashboard();
+});
+
+/* ----------  3-PLAN + STRIPE  ---------- */
+function setupPlanButtons() {
+  // Plan buttons on dashboard
+  window.selectPlan = async function(planType) {
     try {
-      const res = await fetch('https://financeflow-api.onrender.com/api/dashboard');
-      const data = await res.json();
-      const el = id => document.getElementById(id);
-      if (el('totalRevenue')) el('totalRevenue').textContent = `$${data.revenue.toLocaleString()}`;
-      if (el('activeSubs')) el('activeSubs').textContent = data.subscriptions;
-      if (el('outstanding')) el('outstanding').textContent = `$${data.outstanding.toLocaleString()}`;
-      if (el('budgetUsed')) el('budgetUsed').textContent = `${data.budgetPercent}%`;
-      if (el('taxDeductible')) el('taxDeductible').textContent = `$${data.taxDeductible.toLocaleString()}`;
-    } catch (e) {
-      console.warn('Dashboard fetch failed', e);
-    }
-  }
-
-  /* ----------  3-PLAN + STRIPE  ---------- */
-  setupPlanButtons() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const plan = urlParams.get('plan'); // pro / enterprise / null (free)
-
-    if (plan === 'pro') {
-      const btn = document.getElementById('upgradeProBtn');
-      if (btn) btn.addEventListener('click', () => this.startCheckout('price_1XXXXXXXXXX')); // <-- your Pro Price ID
-    }
-    if (plan === 'enterprise') {
-      const btn = document.getElementById('upgradeEntBtn');
-      if (btn) btn.addEventListener('click', () => alert('Redirecting to Calendly...')); // or Calendly link
-    }
-  }
-
-  /* ----------  STRIPE CHECKOUT  ---------- */
-  async startCheckout(priceId) {
-    try {
-      const res = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session', {
+      const response = await fetch('https://financeflow-1sk6.onrender.com/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId })
+        body: JSON.stringify({ plan: planType })
       });
-      const { url } = await res.json();
-      window.location = url; // redirect to Stripe Checkout
+      
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
     } catch (e) {
-      console.error('Checkout error', e);
-      alert('Could not start checkout');
+      console.error('Checkout error:', e);
+      alert('Could not start checkout: ' + e.message);
     }
+  };
+
+  // Settings page buttons
+  const urlParams = new URLSearchParams(window.location.search);
+  const plan = urlParams.get('plan');
+  
+  if (plan === 'professional') {
+    const btn = document.getElementById('upgradeProBtn');
+    if (btn) btn.addEventListener('click', () => this.selectPlan('professional'));
   }
+  if (plan === 'enterprise') {
+    const btn = document.getElementById('upgradeEntBtn');
+    if (btn) btn.addEventListener('click', () => this.selectPlan('enterprise'));
+  }
+}
+/* ----------  STRIPE CHECKOUT  ---------- */
+async function startCheckout(planType) {
+  try {
+    const res = await fetch('https://financeflow-1sk6.onrender.com/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: planType })
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Failed to create checkout session');
+    }
+  } catch (e) {
+    console.error('Checkout error', e);
+    alert('Could not start checkout: ' + e.message);
+  }
+}
 
   /* ----------  EVENTS  ---------- */
   setupEventListeners() {
@@ -352,34 +394,4 @@ class FinanceFlow {
   handleProfileUpdate() {
     const btn = event.target; const orig = btn.textContent;
     btn.classList.add('loading'); btn.textContent = 'Updating...';
-    setTimeout(() => {
-      this.showSettingsNotification('Profile updated successfully!', 'success');
-      btn.classList.remove('loading'); btn.textContent = orig;
-    }, 1500);
-  }
-  handlePreferenceChange(toggle) {
-    const pref = toggle.closest('.flex');
-    const label = pref.querySelector('h3').textContent;
-    const on = toggle.checked;
-    this.showSettingsNotification(`${label} ${on ? 'enabled' : 'disabled'}`, 'info');
-    setTimeout(() => console.log(`Preference ${label} set to ${on}`), 500);
-  }
-  showSettingsNotification(message, type = 'info') {
-    const note = document.createElement('div');
-    note.className = `fixed top-20 right-6 z-50 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 ${type === 'success' ? 'bg-green-500 text-white' : type === 'error' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`;
-    note.textContent = message;
-    document.body.appendChild(note);
-    setTimeout(() => note.classList.remove('translate-x-full'), 100);
-    setTimeout(() => { note.classList.add('translate-x-full'); setTimeout(() => note.remove(), 300); }, 3000);
-  }
-} // end class
-
-/* ----------  BOOTSTRAP  ---------- */
-document.addEventListener('DOMContentLoaded', () => {
-  window.financeFlow = new FinanceFlow();
-});
-
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = FinanceFlow;
-}
+    set
