@@ -1,11 +1,5 @@
-// FinanceFlow Main JavaScript
-// -----------------------------------------
-// TODO: set this to the EXACT URL of your Render backend Web Service
-// e.g. 'https://financeflow-api.onrender.com'
 const API_BASE = 'https://financeflow-api-4mua.onrender.com';
 
-// TODO: put your real Stripe Price IDs here from your Stripe dashboard
-// These are *not* secret, they can live in frontend JS.
 const PRICE_MAP = {
   starter: 'price_1SbZFqFj4r8OeJwWBlvD7LFZ',
   professional: 'price_1SbZHFFj4r8OeJwWnKSUaDiu',
