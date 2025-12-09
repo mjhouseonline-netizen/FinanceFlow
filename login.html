@@ -21,20 +21,15 @@
     <h1 class="text-2xl font-bold text-center text-purple-700 mb-2">
       FinanceFlow
     </h1>
-    <p
-      id="modeTitle"
-      class="text-center text-gray-500 mb-6"
-    >
+    <p id="modeTitle" class="text-center text-gray-500 mb-6">
       Sign in to your account
     </p>
 
     <form id="authForm" class="space-y-4">
       <div>
-        <label
-          for="email"
-          class="block text-sm font-medium text-gray-700 mb-1"
-          >Email</label
-        >
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+          Email
+        </label>
         <input
           id="email"
           type="email"
@@ -45,11 +40,9 @@
       </div>
 
       <div>
-        <label
-          for="password"
-          class="block text-sm font-medium text-gray-700 mb-1"
-          >Password</label
-        >
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+          Password
+        </label>
         <input
           id="password"
           type="password"
@@ -60,10 +53,7 @@
         />
       </div>
 
-      <p
-        id="errorBox"
-        class="text-sm text-red-600 min-h-[1.25rem]"
-      ></p>
+      <p id="errorBox" class="text-sm text-red-600 min-h-[1.25rem]"></p>
 
       <button
         id="submitBtn"
@@ -91,7 +81,6 @@
   </div>
 
   <script>
-    // Backend URL
     const API_BASE = "https://financeflow-api-4mua.onrender.com";
 
     const form = document.getElementById("authForm");
@@ -103,8 +92,7 @@
     const toggleText = document.getElementById("toggleText");
     const toggleModeBtn = document.getElementById("toggleModeBtn");
 
-    // "login" or "register"
-    let mode = "login";
+    let mode = "login"; // "login" or "register"
 
     function setMode(newMode) {
       mode = newMode;
@@ -164,21 +152,20 @@
           localStorage.setItem("financeflow_user", JSON.stringify(data.user));
         }
 
-        // Redirect to dashboard
         window.location.href = "index.html";
       } catch (err) {
         console.error(err);
         errorBox.textContent = err.message || "Login failed.";
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = mode === "login" ? "Sign in" : "Create account";
+        submitBtn.textContent =
+          mode === "login" ? "Sign in" : "Create account";
       }
     });
 
-    // If already logged in, you can optionally skip login:
     const existingToken = localStorage.getItem("financeflow_token");
     if (existingToken) {
-      // Simple redirect; later we can verify token with /api/me if you like.
+      // Optional: auto-redirect if already logged in
       // window.location.href = "index.html";
     }
   </script>
