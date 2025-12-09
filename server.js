@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 
-// CORS configuration for your custom domain
+// CORS configured for your custom domain
 const corsOptions = {
   origin: [
     'https://financeflow.skillsoul.store',
@@ -18,6 +19,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use('/api/webhook', express.raw({ type: 'application/json' }));
 
 // Raw body parser for Stripe webhooks
 app.use('/api/webhook', express.raw({ type: 'application/json' }));

@@ -30,7 +30,7 @@ class FinanceFlow {
 /* ----------  LIVE DASHBOARD FETCH  ---------- */
 async function fetchDashboard() {
   try {
-    const res = await fetch('https://financeflow-1sk6.onrender.com/api/dashboard');
+    const res = await fetch('https://financeflow-api.onrender.com/api/dashboard');
     const data = await res.json();
     const el = id => document.getElementById(id);
     if (el('totalRevenue')) el('totalRevenue').textContent = `$${data.revenue.toLocaleString()}`;
@@ -46,7 +46,7 @@ async function fetchDashboard() {
 /* ----------  WEBHOOK HEALTH CHECK  ---------- */
 async function checkWebhookHealth() {
   try {
-    const res = await fetch('https://financeflow-1sk6.onrender.com/api/health');
+    const res = await fetch('https://financeflow-api.onrender.com/api/health');
     const data = await res.json();
     console.log('Webhook status:', data.webhook);
   } catch (e) {
@@ -65,7 +65,7 @@ function setupPlanButtons() {
   // Plan buttons on dashboard
   window.selectPlan = async function(planType) {
     try {
-      const response = await fetch('https://financeflow-1sk6.onrender.com/api/create-checkout-session', {
+      const response = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan: planType })
@@ -99,7 +99,7 @@ function setupPlanButtons() {
 /* ----------  STRIPE CHECKOUT  ---------- */
 async function startCheckout(planType) {
   try {
-    const res = await fetch('https://financeflow-1sk6.onrender.com/api/create-checkout-session', {
+    const res = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan: planType })
