@@ -304,3 +304,11 @@ document.addEventListener('DOMContentLoaded', () => {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = FinanceFlow;
 }
+// Global helper for inline onclick="selectPlan('planType')" buttons
+window.selectPlan = function (planType) {
+  if (window.financeFlow && typeof window.financeFlow.startCheckout === 'function') {
+    window.financeFlow.startCheckout(planType);
+  } else {
+    console.error('FinanceFlow is not initialised yet');
+  }
+};
