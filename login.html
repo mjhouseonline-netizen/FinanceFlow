@@ -1,54 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>FinanceFlow - Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>FinanceFlow – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>body{font-family:'Inter',sans-serif;background:#f3f4f6}</style>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      background: #f3f4f6;
+    }
+  </style>
 </head>
 <body class="min-h-screen flex items-center justify-center px-4">
   <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-    <h1 class="text-2xl font-bold text-center text-purple-700 mb-2">FinanceFlow</h1>
-    <p class="text-center text-gray-500 mb-6">Choose your plan to continue</p>
+    <h1 class="text-2xl font-bold text-center text-purple-700 mb-2">
+      FinanceFlow
+    </h1>
+    <p
+      id="modeTitle"
+      class="text-center text-gray-500 mb-6"
+    >
+      Sign in to your account
+    </p>
 
-    <!-- 3 Plans -->
-    <div class="space-y-4">
-      <button onclick="selectPlan('free')" class="w-full p-4 border rounded-xl hover:bg-purple-50 text-left">
-        <div class="font-semibold text-gray-800">Free</div>
-        <div class="text-sm text-gray-500">$0 / month • Basic expense tracking</div>
+    <form id="authForm" class="space-y-4">
+      <div>
+        <label
+          for="email"
+          class="block text-sm font-medium text-gray-700 mb-1"
+          >Email</label
+        >
+        <input
+          id="email"
+          type="email"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <div>
+        <label
+          for="password"
+          class="block text-sm font-medium text-gray-700 mb-1"
+          >Password</label
+        >
+        <input
+          id="password"
+          type="password"
+          required
+          minlength="6"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <p
+        id="errorBox"
+        class="text-sm text-red-600 min-h-[1.25rem]"
+      ></p>
+
+      <button
+        id="submitBtn"
+        type="submit"
+        class="w-full py-2.5 rounded-lg font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        Sign in
       </button>
+    </form>
 
-      <button onclick="selectPlan('pro')" class="w-full p-4 border rounded-xl hover:bg-purple-50 text-left">
-        <div class="font-semibold text-gray-800">Pro</div>
-        <div class="text-sm text-gray-500">$19 / month • AI insights & reports</div>
+    <p class="mt-6 text-center text-sm text-gray-600">
+      <span id="toggleText">Don't have an account?</span>
+      <button
+        id="toggleModeBtn"
+        type="button"
+        class="ml-1 text-purple-600 font-semibold hover:underline"
+      >
+        Create one
       </button>
+    </p>
 
-      <button onclick="selectPlan('enterprise')" class="w-full p-4 border rounded-xl hover:bg-purple-50 text-left">
-        <div class="font-semibold text-gray-800">Enterprise</div>
-        <div class="text-sm text-gray-500">$49 / month • Unlimited + priority support</div>
-      </button>
-    </div>
-
-    <!-- Continue -->
-    <button id="continueBtn" disabled class="mt-6 w-full bg-purple-600 text-white py-2 rounded-lg opacity-50 cursor-not-allowed">Continue</button>
+    <p class="mt-4 text-center text-xs text-gray-400">
+      You can change plans any time from inside FinanceFlow.
+    </p>
   </div>
 
   <script>
-    let selected = '';
-    function selectPlan(plan) {
-      selected = plan;
-      document.getElementById('continueBtn').disabled = false;
-      document.getElementById('continueBtn').classList.remove('opacity-50','cursor-not-allowed');
-    }
-    document.getElementById('continueBtn').addEventListener('click', () => {
-      if (selected === 'free') {
-        window.location = 'index.html';
+    // Backend URL
+    const API_BASE = "https://financeflow-api-4mua.onrender.com";
+
+    const form = document.getElementById("authForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const errorBox = document.getElementById("errorBox");
+    const submitBtn = document.getElementById("submitBtn");
+    const modeTitle = document.getElementById("modeTitle");
+    const toggleText = document.getElementById("toggleText");
+    const toggleModeBtn = document.getElementById("toggleModeBtn");
+
+    // "login" or "register"
+    let mode = "login";
+
+    function setMode(newMode) {
+      mode = newMode;
+      if (mode === "login") {
+        modeTitle.textContent = "Sign in to your account";
+        submitBtn.textContent = "Sign in";
+        toggleText.textContent = "Don't have an account?";
+        toggleModeBtn.textContent = "Create one";
       } else {
-        window.location = `index.html?plan=${selected}`;
+        modeTitle.textContent = "Create your account";
+        submitBtn.textContent = "Create account";
+        toggleText.textContent = "Already have an account?";
+        toggleModeBtn.textContent = "Sign in";
+      }
+      errorBox.textContent = "";
+    }
+
+    toggleModeBtn.addEventListener("click", () => {
+      setMode(mode === "login" ? "register" : "login");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.textContent = "";
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        errorBox.textContent = "Email and password are required.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent =
+        mode === "login" ? "Signing in..." : "Creating account...";
+
+      try {
+        const endpoint = mode === "login" ? "/api/login" : "/api/register";
+
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+
+        if (data.token) {
+          localStorage.setItem("financeflow_token", data.token);
+        }
+        if (data.user) {
+          localStorage.setItem("financeflow_user", JSON.stringify(data.user));
+        }
+
+        // Redirect to dashboard
+        window.location.href = "index.html";
+      } catch (err) {
+        console.error(err);
+        errorBox.textContent = err.message || "Login failed.";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = mode === "login" ? "Sign in" : "Create account";
       }
     });
+
+    // If already logged in, you can optionally skip login:
+    const existingToken = localStorage.getItem("financeflow_token");
+    if (existingToken) {
+      // Simple redirect; later we can verify token with /api/me if you like.
+      // window.location.href = "index.html";
+    }
   </script>
 </body>
 </html>
