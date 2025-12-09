@@ -1,397 +1,317 @@
 // FinanceFlow Main JavaScript
+// -----------------------------------------
+// TODO: set this to the EXACT URL of your Render backend Web Service
+// e.g. 'https://financeflow-api.onrender.com'
+const API_BASE = 'https://financeflow-api-4mua.onrender.com';
+
+// TODO: put your real Stripe Price IDs here from your Stripe dashboard
+// These are *not* secret, they can live in frontend JS.
+const PRICE_MAP = {
+  starter: 'price_1SbZFqFj4r8OeJwWBlvD7LFZ',
+  professional: 'price_1SbZHFFj4r8OeJwWnKSUaDiu',
+  enterprise: 'price_1SbZHlFj4r8OeJwWRWXPpTUu'
+};
+
 class FinanceFlow {
   constructor() {
+    // Demo dashboard data used if API call fails
+    this.demoDashboard = {
+      revenue: 47250,
+      subscriptions: 328,
+      outstanding: 12300,
+      budgetPercent: 68,
+      taxDeductible: 8940
+    };
+
+    // Optional sample data (for other pages if you need it)
     this.expenses = [
-      { id: 1, amount: 52.99, description: 'Adobe Creative Suite', category: 'Software', date: '2025-12-05', client: 'Personal', taxDeductible: true },
-      { id: 2, amount: 28.50, description: 'Client Lunch - Starbucks', category: 'Meals', date: '2025-12-04', client: 'Acme Corp', taxDeductible: true },
-      { id: 3, amount: 89.99, description: 'Office Supplies', category: 'Equipment', date: '2025-12-03', client: 'Personal', taxDeductible: true },
-      { id: 4, amount: 150.00, description: 'Software License', category: 'Software', date: '2025-12-02', client: 'Personal', taxDeductible: true },
-      { id: 5, amount: 75.50, description: 'Business Dinner', category: 'Meals', date: '2025-12-01', client: 'Tech Startup', taxDeductible: true }
+      { id: 1, amount: 52.99, description: 'Adobe Creative Cloud', date: '2025-12-05', client: 'Personal', taxDeductible: true },
+      { id: 2, amount: 28.50, description: 'Client coffee meeting', date: '2025-12-04', client: 'Acme Corp', taxDeductible: true },
+      { id: 3, amount: 89.99, description: 'Office supplies', date: '2025-12-03', client: 'Personal', taxDeductible: true },
+      { id: 4, amount: 150.00, description: 'Software license', date: '2025-12-02', client: 'Personal', taxDeductible: true },
+      { id: 5, amount: 75.50, description: 'Business dinner', date: '2025-12-01', client: 'Tech Startup', taxDeductible: true }
     ];
+
     this.clients = [
       { id: 1, name: 'Acme Corp', email: 'contact@acme.com', revenue: 15000, balance: 2500 },
       { id: 2, name: 'Tech Startup', email: 'hello@techstartup.com', revenue: 8500, balance: 1200 },
       { id: 3, name: 'Creative Agency', email: 'projects@creative.com', revenue: 12000, balance: 0 }
     ];
-    this.budgets = { software: { allocated: 1500, spent: 1240 }, travel: { allocated: 1200, spent: 890 }, marketing: { allocated: 500, spent: 650 }, equipment: { allocated: 800, spent: 450 } };
+
+    this.budgets = {
+      software: { allocated: 1500, spent: 1240 },
+      marketing: { allocated: 1000, spent: 750 },
+      travel: { allocated: 500, spent: 320 },
+      equipment: { allocated: 800, spent: 450 }
+    };
+
     this.init();
   }
 
+  // -----------------------------------------
+  // INITIALISATION
+  // -----------------------------------------
   init() {
-    this.setupEventListeners();
+    this.setupBasicUI();
     this.initializeAnimations();
     this.initializeCharts();
     this.setupScrollReveal();
-    this.startTypewriterEffect();
-    this.fetchDashboard();          // live counts from Stripe
-    this.setupPlanButtons();        // 3-plan + Stripe
+    this.setupPlanButtons();
+    this.fetchDashboard();
+    this.checkWebhookHealth();
   }
 
-/* ----------  LIVE DASHBOARD FETCH  ---------- */
-async function fetchDashboard() {
-  try {
-    const res = await fetch('https://financeflow-api.onrender.com/api/dashboard');
-    const data = await res.json();
-    const el = id => document.getElementById(id);
-    if (el('totalRevenue')) el('totalRevenue').textContent = `$${data.revenue.toLocaleString()}`;
-    if (el('activeSubs')) el('activeSubs').textContent = data.subscriptions;
-    if (el('outstanding')) el('outstanding').textContent = `$${data.outstanding.toLocaleString()}`;
-    if (el('budgetUsed')) el('budgetUsed').textContent = `${data.budgetPercent}%`;
-    if (el('taxDeductible')) el('taxDeductible').textContent = `$${data.taxDeductible.toLocaleString()}`;
-  } catch (e) {
-    console.warn('Dashboard fetch failed', e);
+  setupBasicUI() {
+    // Example mobile nav toggle if you have these IDs in HTML
+    const mobileToggle = document.getElementById('mobileNavToggle');
+    const mobileMenu = document.getElementById('mobileNav');
+
+    if (mobileToggle && mobileMenu) {
+      mobileToggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
   }
-}
 
-/* ----------  WEBHOOK HEALTH CHECK  ---------- */
-async function checkWebhookHealth() {
-  try {
-    const res = await fetch('https://financeflow-api.onrender.com/api/health');
-    const data = await res.json();
-    console.log('Webhook status:', data.webhook);
-  } catch (e) {
-    console.warn('Health check failed', e);
+  // -----------------------------------------
+  // ANIMATIONS / REVEAL
+  // -----------------------------------------
+  initializeAnimations() {
+    if (typeof anime === 'undefined') return;
+
+    const cards = document.querySelectorAll('.reveal');
+    if (!cards.length) return;
+
+    anime({
+      targets: cards,
+      opacity: [0, 1],
+      translateY: [16, 0],
+      delay: anime.stagger(80),
+      duration: 600,
+      easing: 'easeOutQuad'
+    });
   }
-}
 
-// Check webhook health on page load
-document.addEventListener('DOMContentLoaded', () => {
-  checkWebhookHealth();
-  fetchDashboard();
-});
+  setupScrollReveal() {
+    const els = document.querySelectorAll('.reveal-on-scroll');
+    if (!els.length || typeof IntersectionObserver === 'undefined') return;
 
-/* ----------  3-PLAN + STRIPE  ---------- */
-function setupPlanButtons() {
-  // Plan buttons on dashboard
-  window.selectPlan = async function(planType) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+
+    els.forEach(el => observer.observe(el));
+  }
+
+  // -----------------------------------------
+  // CHARTS (optional – safe no-op if no element)
+  // -----------------------------------------
+  initializeCharts() {
+    if (typeof echarts === 'undefined') return;
+
+    const spendEl = document.getElementById('spendChart');
+    if (!spendEl) return;
+
+    const chart = echarts.init(spendEl);
+    const option = {
+      tooltip: { trigger: 'axis' },
+      xAxis: {
+        type: 'category',
+        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      },
+      yAxis: { type: 'value' },
+      series: [
+        {
+          type: 'bar',
+          data: [320, 280, 360, 410, 380, 450, 390],
+          smooth: true
+        }
+      ]
+    };
+
+    chart.setOption(option);
+  }
+
+  // -----------------------------------------
+  // DASHBOARD DATA (API + fallback)
+  // -----------------------------------------
+  async fetchDashboard() {
     try {
-      const response = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session'), {
+      const res = await fetch(`${API_BASE}/api/dashboard`, {
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      this.applyDashboardData(data);
+    } catch (err) {
+      console.warn('Dashboard fetch failed, using demo data instead:', err);
+      this.useDemoDashboard();
+    }
+  }
+
+  applyDashboardData(data) {
+    const byId = id => document.getElementById(id);
+
+    const revenueEl = byId('totalRevenue');
+    const outstandingEl = byId('outstanding');
+    const budgetEl = byId('budgetUsed');
+    const taxEl = byId('taxDeductible');
+    const subsEl = byId('activeSubs'); // only used if you have this ID in HTML
+
+    if (revenueEl && typeof data.revenue === 'number') {
+      revenueEl.textContent = `$${data.revenue.toLocaleString()}`;
+    }
+
+    if (outstandingEl && typeof data.outstanding === 'number') {
+      outstandingEl.textContent = `$${data.outstanding.toLocaleString()}`;
+    }
+
+    if (budgetEl && typeof data.budgetPercent === 'number') {
+      budgetEl.textContent = `${data.budgetPercent}%`;
+    }
+
+    if (taxEl && typeof data.taxDeductible === 'number') {
+      taxEl.textContent = `$${data.taxDeductible.toLocaleString()}`;
+    }
+
+    if (subsEl && typeof data.subscriptions === 'number') {
+      subsEl.textContent = data.subscriptions.toString();
+    }
+  }
+
+  useDemoDashboard() {
+    this.applyDashboardData(this.demoDashboard);
+  }
+
+  // -----------------------------------------
+  // BACKEND HEALTH CHECK (optional)
+  // -----------------------------------------
+  async checkWebhookHealth() {
+    try {
+      const res = await fetch(`${API_BASE}/api/health`, {
+        credentials: 'include'
+      });
+      if (!res.ok) return;
+
+      const data = await res.json();
+      console.log('API health:', data);
+    } catch (err) {
+      console.warn('Health check failed:', err);
+    }
+  }
+
+  // -----------------------------------------
+  // STRIPE PLAN BUTTONS & CHECKOUT
+  // -----------------------------------------
+  setupPlanButtons() {
+    // 1) Buttons with data-plan in your HTML
+    const planButtons = document.querySelectorAll('[data-plan]');
+    planButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const planType = btn.dataset.plan;
+        if (planType) {
+          this.startCheckout(planType);
+        }
+      });
+    });
+
+    // 2) Optional: URL parameter ?plan=professional
+    const urlParams = new URLSearchParams(window.location.search);
+    const planFromUrl = urlParams.get('plan');
+    if (planFromUrl && PRICE_MAP[planFromUrl]) {
+      // You can auto-start checkout or highlight the chosen plan here if you want.
+      console.log('Plan from URL:', planFromUrl);
+    }
+  }
+
+  async startCheckout(planType) {
+    try {
+      const priceId = PRICE_MAP[planType];
+      if (!priceId) {
+        alert(`Unknown plan: ${planType}. Check PRICE_MAP in main.js.`);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planType })
+        credentials: 'include',
+        body: JSON.stringify({ priceId })
       });
-      
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Checkout HTTP ${response.status}: ${text}`);
+      }
+
       const data = await response.json();
-      if (data.url) {
+      if (data && data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error(data.error || 'No checkout URL returned from server');
       }
     } catch (e) {
       console.error('Checkout error:', e);
       alert('Could not start checkout: ' + e.message);
     }
-  };
-
-  // Settings page buttons
-  const urlParams = new URLSearchParams(window.location.search);
-  const plan = urlParams.get('plan');
-  
-  if (plan === 'professional') {
-    const btn = document.getElementById('upgradeProBtn');
-    if (btn) btn.addEventListener('click', () => this.selectPlan('professional'));
   }
-  if (plan === 'enterprise') {
-    const btn = document.getElementById('upgradeEntBtn');
-    if (btn) btn.addEventListener('click', () => this.selectPlan('enterprise'));
+
+  // -----------------------------------------
+  // SMALL TOAST / NOTIFICATION (optional)
+  // -----------------------------------------
+  showNotification(message, type = 'info') {
+    const containerId = 'fflow-toast-container';
+    let container = document.getElementById(containerId);
+    if (!container) {
+      container = document.createElement('div');
+      container.id = containerId;
+      container.className = 'fixed top-4 right-4 space-y-3 z-50';
+      document.body.appendChild(container);
+    }
+
+    const note = document.createElement('div');
+    const baseClasses = 'px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-3 transform transition-all duration-300 translate-x-full';
+    const typeClass =
+      type === 'success'
+        ? 'bg-green-50 text-green-800 border border-green-200'
+        : type === 'error'
+        ? 'bg-red-50 text-red-800 border border-red-200'
+        : 'bg-purple-50 text-purple-800 border border-purple-200';
+
+    note.className = `${baseClasses} ${typeClass}`;
+    note.textContent = message;
+    container.appendChild(note);
+
+    // slide in
+    requestAnimationFrame(() => {
+      note.classList.remove('translate-x-full');
+    });
+
+    // slide out after 3s
+    setTimeout(() => {
+      note.classList.add('translate-x-full');
+      setTimeout(() => note.remove(), 300);
+    }, 3000);
   }
 }
-/* ----------  STRIPE CHECKOUT  ---------- */
-async function startCheckout(planType) {
-  try {
-    const res = await fetch('https://financeflow-api.onrender.com/api/create-checkout-session'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: planType })
-    });
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || 'Failed to create checkout session');
-    }
-  } catch (e) {
-    console.error('Checkout error', e);
-    alert('Could not start checkout: ' + e.message);
-  }
+
+// -----------------------------------------
+// BOOTSTRAP
+// -----------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+  window.financeFlow = new FinanceFlow();
+});
+
+// Export for CommonJS (optional; harmless in browser)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = FinanceFlow;
 }
-
-  /* ----------  EVENTS  ---------- */
-  setupEventListeners() {
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => this.toggleMobileMenu());
-
-    document.querySelectorAll('.quick-action-btn').forEach(btn =>
-      btn.addEventListener('click', e => this.handleQuickAction(e))
-    );
-
-    // "Add Expense" button (valid selector)
-    const addExpenseBtn = Array.from(document.querySelectorAll('button'))
-                               .find(btn => btn.textContent.includes('Add Expense'));
-    if (addExpenseBtn) addExpenseBtn.addEventListener('click', () => this.showAddExpenseModal());
-
-    document.querySelectorAll('.ai-suggestion-btn').forEach(btn =>
-      btn.addEventListener('click', e => this.handleAISuggestion(e))
-    );
-
-    document.querySelectorAll('.chart-period-btn').forEach(btn =>
-      btn.addEventListener('click', e => this.changeChartPeriod(e))
-    );
-  }
-
-  /* ----------  ANIMATIONS  ---------- */
-  initializeAnimations() {
-    anime({ targets: '.floating-element', translateY: [-10, 10], duration: 3000, easing: 'easeInOutSine', direction: 'alternate', loop: true, delay: anime.stagger(200) });
-    anime({ targets: '.metric-card', scale: [0.9, 1], opacity: [0, 1], duration: 800, easing: 'easeOutElastic(1, .8)', delay: anime.stagger(100, { start: 200 }) });
-    this.animateProgressBars();
-  }
-  animateProgressBars() {
-    document.querySelectorAll('.progress-bar').forEach(bar => {
-      const width = bar.style.width || bar.dataset.width || '0%';
-      anime({ targets: bar, width: width, duration: 1500, easing: 'easeOutQuart', delay: 500 });
-    });
-  }
-
-  /* ----------  CHARTS  ---------- */
-  initializeCharts() {
-    this.createExpenseChart();
-    this.createBudgetChart();
-    this.createRevenueChart();
-  }
-  createExpenseChart() {
-    const el = document.getElementById('expenseChart');
-    if (!el) return;
-    const chart = echarts.init(el);
-    chart.setOption({
-      tooltip: { trigger: 'axis', backgroundColor: 'rgba(255,255,255,.95)', borderColor: '#7C3AED', textStyle: { color: '#374151' } },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'category', data: ['Dec 1', 'Dec 2', 'Dec 3', 'Dec 4', 'Dec 5', 'Dec 6', 'Dec 7'], axisLine: { lineStyle: { color: '#E5E7EB' } }, axisLabel: { color: '#6B7280' } },
-      yAxis: { type: 'value', axisLine: { lineStyle: { color: '#E5E7EB' } }, axisLabel: { color: '#6B7280' }, splitLine: { lineStyle: { color: '#F3F4F6' } } },
-      series: [
-        { name: 'Expenses', type: 'line', smooth: true, data: [120, 200, 150, 80, 70, 110, 130], lineStyle: { color: '#7C3AED', width: 3 }, itemStyle: { color: '#7C3AED' }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(124,58,237,.3)' }, { offset: 1, color: 'rgba(124,58,237,.05)' }] } } },
-        { name: 'Tax Deductible', type: 'line', smooth: true, data: [100, 180, 130, 70, 60, 95, 115], lineStyle: { color: '#10B981', width: 2 }, itemStyle: { color: '#10B981' } }
-      ]
-    });
-    setTimeout(() => chart.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: 6 }), 1000);
-    window.addEventListener('resize', () => chart.resize());
-  }
-  createBudgetChart() {
-    const el = document.getElementById('budgetChart');
-    if (!el) return;
-    const chart = echarts.init(el);
-    chart.setOption({
-      tooltip: { trigger: 'item', formatter: '{a}<br/>{b}: ${c} ({d}%)' },
-      legend: { orient: 'vertical', left: 'left', textStyle: { color: '#6B7280' } },
-      series: [{ name: 'Budget Allocation', type: 'pie', radius: ['40%', '70%'], center: ['60%', '50%'], itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 }, label: { show: false, position: 'center' }, emphasis: { label: { show: true, fontSize: '18', fontWeight: 'bold' } }, labelLine: { show: false }, data: [{ value: 1500, name: 'Software', itemStyle: { color: '#7C3AED' } }, { value: 1200, name: 'Travel', itemStyle: { color: '#A78BFA' } }, { value: 500, name: 'Marketing', itemStyle: { color: '#10B981' } }, { value: 800, name: 'Equipment', itemStyle: { color: '#F59E0B' } }] }]
-    });
-    window.addEventListener('resize', () => chart.resize());
-  }
-  createRevenueChart() {
-    const el = document.getElementById('revenueChart');
-    if (!el) return;
-    const chart = echarts.init(el);
-    chart.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'value', axisLine: { lineStyle: { color: '#E5E7EB' } }, axisLabel: { color: '#6B7280' } },
-      yAxis: { type: 'category', data: ['Creative Agency', 'Tech Startup', 'Acme Corp'], axisLine: { lineStyle: { color: '#E5E7EB' } }, axisLabel: { color: '#6B7280' } },
-      series: [{ name: 'Revenue', type: 'bar', data: [12000, 8500, 15000], itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: '#7C3AED' }, { offset: 1, color: '#A78BFA' }] }, borderRadius: [0, 4, 4, 0] } }]
-    });
-    window.addEventListener('resize', () => chart.resize());
-  }
-
-  /* ----------  REVEAL / TYPEWRITER  ---------- */
-  setupScrollReveal() {
-    document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
-  }
-  startTypewriterEffect() {
-    document.querySelectorAll('.typewriter').forEach((el, i) => setTimeout(() => this.typeWriter(el), i * 2000));
-  }
-  typeWriter(element) {
-    const text = element.textContent;
-    element.textContent = '';
-    element.style.borderRight = '2px solid #7C3AED';
-    let i = 0;
-    const intv = setInterval(() => {
-      if (i < text.length) element.textContent += text.charAt(i++);
-      else { clearInterval(intv); setTimeout(() => element.style.borderRight = 'none', 1000); }
-    }, 50);
-  }
-
-  /* ----------  QUICK ACTIONS  ---------- */
-  handleQuickAction(e) {
-    const action = e.currentTarget.dataset.action;
-    switch (action) {
-      case 'add-expense': this.showAddExpenseModal(); break;
-      case 'view-reports': window.location.href = 'reports.html'; break;
-    }
-  }
-
-  /* ----------  MODAL & EXPENSE  ---------- */
-  showAddExpenseModal() {
-    const modal = this.createModal('Add New Expense', this.getExpenseFormHTML());
-    document.body.appendChild(modal);
-    anime({ targets: modal, opacity: [0, 1], scale: [0.8, 1], duration: 300, easing: 'easeOutQuart' });
-    this.setupExpenseFormHandlers(modal);
-  }
-  getExpenseFormHTML() {
-    return `
-      <form class="space-y-4">
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Amount</label><input type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0.00"></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Description</label><input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="What was this expense for?"></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Category</label><select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"><option>Software</option><option>Equipment</option><option>Travel</option><option>Meals</option><option>Marketing</option><option>Other</option></select></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Client (Optional)</label><select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"><option>Personal</option><option>Acme Corp</option><option>Tech Startup</option><option>Creative Agency</option></select></div>
-        <div class="flex items-center"><input type="checkbox" id="taxDeductible" class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"><label for="taxDeductible" class="ml-2 text-sm text-gray-700">Tax deductible expense</label></div>
-        <div class="flex space-x-3 pt-4"><button type="submit" class="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">Add Expense</button><button type="button" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors cancel-btn">Cancel</button></div>
-      </form>`;
-  }
-  setupExpenseFormHandlers(modal) {
-    const form = modal.querySelector('form');
-    const cancelBtn = modal.querySelector('.cancel-btn');
-    form.addEventListener('submit', e => { e.preventDefault(); this.handleExpenseSubmit(form, modal); });
-    cancelBtn.addEventListener('click', () => this.closeModal(modal));
-    modal.addEventListener('click', e => { if (e.target === modal) this.closeModal(modal); });
-  }
-  handleExpenseSubmit(form, modal) {
-    const expense = {
-      id: this.expenses.length + 1,
-      amount: parseFloat(form.querySelector('input[type="number"]').value),
-      description: form.querySelector('input[type="text"]').value,
-      category: form.querySelector('select').value,
-      client: form.querySelectorAll('select')[1].value,
-      date: new Date().toISOString().split('T')[0],
-      taxDeductible: form.querySelector('input[type="checkbox"]').checked
-    };
-    this.expenses.unshift(expense);
-    this.showSuccessMessage('Expense added successfully!');
-    this.closeModal(modal);
-    this.refreshExpenseDisplay();
-  }
-  createModal(title, content) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.style.opacity = '0';
-    modal.innerHTML = `
-      <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-xl font-semibold text-gray-900">${title}</h3>
-          <button class="text-gray-400 hover:text-gray-600 close-btn"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-        </div>
-        ${content}
-      </div>`;
-    modal.querySelector('.close-btn').addEventListener('click', () => this.closeModal(modal));
-    return modal;
-  }
-  closeModal(modal) {
-    anime({ targets: modal, opacity: [1, 0], scale: [1, 0.8], duration: 200, easing: 'easeInQuart', complete: () => modal.remove() });
-  }
-  showSuccessMessage(msg) {
-    const toast = document.createElement('div');
-    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    toast.textContent = msg; toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)';
-    document.body.appendChild(toast);
-    anime({ targets: toast, opacity: [0, 1], translateX: ['100%', '0%'], duration: 300, easing: 'easeOutQuart', complete: () => {
-      setTimeout(() => anime({ targets: toast, opacity: [1, 0], translateX: ['0%', '100%'], duration: 300, easing: 'easeInQuart', complete: () => toast.remove() }), 3000);
-    }});
-  }
-  refreshExpenseDisplay() {
-    if (window.location.pathname.includes('expenses.html')) this.updateExpensesList();
-  }
-  updateExpensesList() {
-    const container = document.getElementById('expensesList');
-    if (container) this.renderExpensesList(container);
-  }
-  renderExpensesList(container) {
-    container.innerHTML = '';
-    this.expenses.forEach(expense => container.appendChild(this.createExpenseElement(expense)));
-    anime({ targets: container.children, opacity: [0, 1], translateY: [20, 0], duration: 600, easing: 'easeOutQuart', delay: anime.stagger(100) });
-  }
-  createExpenseElement(expense) {
-    const catColors = { Software: 'bg-purple-100 text-purple-600', Equipment: 'bg-blue-100 text-blue-600', Travel: 'bg-green-100 text-green-600', Meals: 'bg-amber-100 text-amber-600', Marketing: 'bg-pink-100 text-pink-600', Other: 'bg-gray-100 text-gray-600' };
-    const div = document.createElement('div');
-    div.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
-    div.innerHTML = `
-      <div class="flex items-center">
-        <div class="w-10 h-10 ${catColors[expense.category] || catColors.Other} rounded-lg flex items-center justify-center mr-3"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"></path></svg></div>
-        <div><p class="font-medium text-gray-900">${expense.description}</p><p class="text-sm text-gray-500">${expense.category} • ${expense.date}</p></div>
-      </div>
-      <div class="text-right"><p class="font-semibold text-gray-900">$${expense.amount.toFixed(2)}</p>${expense.taxDeductible ? '<p class="text-xs text-green-600">Tax deductible</p>' : ''}</div>`;
-    return div;
-  }
-
-  /* ----------  AI  ---------- */
-  handleAISuggestion(e) {
-    const suggestion = e.currentTarget.textContent;
-    const response = this.generateAIResponse(suggestion);
-    this.displayAIResponse(response);
-  }
-  generateAIResponse(query) {
-    const map = {
-      '• Show tax-deductible expenses': 'You have $8,940 in tax-deductible expenses this year, potentially saving you $2,235 in taxes.',
-      '• Budget optimization tips': 'Consider reducing marketing spend by 20% and reallocating to software tools for better ROI.',
-      '• Cash flow forecast': 'Based on current trends, your cash flow will remain positive with $15,000 projected for next month.'
-    };
-    return map[query] || 'I\'m analyzing your financial data to provide personalized insights.';
-  }
-  displayAIResponse(response) {
-    const container = document.querySelector('.ai-bubble .space-y-4');
-    if (!container) return;
-    const div = document.createElement('div');
-    div.className = 'bg-purple-50 p-4 rounded-lg';
-    div.innerHTML = `<p class="text-sm text-gray-700">${response}</p>`;
-    container.appendChild(div);
-    anime({ targets: div, opacity: [0, 1], translateY: [20, 0], duration: 400, easing: 'easeOutQuart' });
-  }
-
-  /* ----------  CHART PERIOD  ---------- */
-  changeChartPeriod(e) {
-    document.querySelectorAll('.chart-period-btn').forEach(btn => {
-      btn.classList.remove('bg-purple-100', 'text-purple-600');
-      btn.classList.add('text-gray-600', 'hover:bg-gray-100');
-    });
-    e.currentTarget.classList.add('bg-purple-100', 'text-purple-600');
-    e.currentTarget.classList.remove('text-gray-600', 'hover:bg-gray-100');
-    this.updateChartData(e.currentTarget.textContent);
-  }
-  updateChartData(period) {
-    const chart = echarts.getInstanceByDom(document.getElementById('expenseChart'));
-    if (!chart) return;
-    let data, categories;
-    switch (period) {
-      case '7D': categories = ['Dec 1', 'Dec 2', 'Dec 3', 'Dec 4', 'Dec 5', 'Dec 6', 'Dec 7']; data = [120, 200, 150, 80, 70, 110, 130]; break;
-      case '30D': categories = ['Week 1', 'Week 2', 'Week 3', 'Week 4']; data = [850, 1200, 950, 1100]; break;
-      case '90D': categories = ['Oct', 'Nov', 'Dec']; data = [3200, 3800, 4100]; break;
-    }
-    chart.setOption({ xAxis: { data: categories }, series: [{ data: data }] });
-  }
-
-  /* ----------  UTILS  ---------- */
-  formatCurrency(amount) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount); }
-  formatDate(date) { return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(date)); }
-  toggleMobileMenu() { document.querySelector('.mobile-menu')?.classList.toggle('hidden'); }
-
-  /* ----------  SETTINGS (inside class)  ---------- */
-  initializeSettingsPage() {
-    this.setupSettingsAnimations();
-    this.setupProfileFormHandlers();
-    this.setupPreferenceHandlers();
-  }
-  setupSettingsAnimations() {
-    const cards = document.querySelectorAll('.glass-effect');
-    if (cards.length) anime({ targets: cards, opacity: [0, 1], translateY: [30, 0], duration: 800, delay: anime.stagger(200), easing: 'easeOutExpo' });
-  }
-  setupProfileFormHandlers() {
-    const form = document.querySelector('form');
-    if (!form) return;
-    const btn = form.querySelector('button[type="submit"]');
-    if (btn) btn.addEventListener('click', e => { e.preventDefault(); this.handleProfileUpdate(); });
-  }
-  setupPreferenceHandlers() {
-    document.querySelectorAll('input[type="checkbox"]').forEach(toggle =>
-      toggle.addEventListener('change', e => this.handlePreferenceChange(e.target))
-    );
-  }
-  handleProfileUpdate() {
-    const btn = event.target; const orig = btn.textContent;
-    btn.classList.add('loading'); btn.textContent = 'Updating...';
-    set
