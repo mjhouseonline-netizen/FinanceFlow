@@ -14,7 +14,7 @@ const PRICE_MAP = {
 
 class FinanceFlow {
   constructor() {
-    // Demo dashboard data used if API call fails
+    // Demo data used if API fails
     this.demoDashboard = {
       revenue: 47250,
       subscriptions: 328,
@@ -23,7 +23,6 @@ class FinanceFlow {
       taxDeductible: 8940
     };
 
-    // Optional sample data (for other pages if you need it)
     this.expenses = [
       { id: 1, amount: 52.99, description: 'Adobe Creative Cloud', date: '2025-12-05', client: 'Personal', taxDeductible: true },
       { id: 2, amount: 28.50, description: 'Client coffee meeting', date: '2025-12-04', client: 'Acme Corp', taxDeductible: true },
@@ -62,7 +61,6 @@ class FinanceFlow {
   }
 
   setupBasicUI() {
-    // Example mobile nav toggle if you have these IDs in HTML
     const mobileToggle = document.getElementById('mobileNavToggle');
     const mobileMenu = document.getElementById('mobileNav');
 
@@ -109,7 +107,7 @@ class FinanceFlow {
   }
 
   // -----------------------------------------
-  // CHARTS (optional – safe no-op if no element)
+  // CHARTS (safe no-op if elements missing)
   // -----------------------------------------
   initializeCharts() {
     if (typeof echarts === 'undefined') return;
@@ -165,7 +163,7 @@ class FinanceFlow {
     const outstandingEl = byId('outstanding');
     const budgetEl = byId('budgetUsed');
     const taxEl = byId('taxDeductible');
-    const subsEl = byId('activeSubs'); // only used if you have this ID in HTML
+    const subsEl = byId('activeSubs');
 
     if (revenueEl && typeof data.revenue === 'number') {
       revenueEl.textContent = `$${data.revenue.toLocaleString()}`;
@@ -213,7 +211,7 @@ class FinanceFlow {
   // STRIPE PLAN BUTTONS & CHECKOUT
   // -----------------------------------------
   setupPlanButtons() {
-    // 1) Buttons with data-plan in your HTML
+    // Buttons with data-plan attributes
     const planButtons = document.querySelectorAll('[data-plan]');
     planButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -224,11 +222,10 @@ class FinanceFlow {
       });
     });
 
-    // 2) Optional: URL parameter ?plan=professional
+    // Optional: ?plan=professional in URL
     const urlParams = new URLSearchParams(window.location.search);
     const planFromUrl = urlParams.get('plan');
     if (planFromUrl && PRICE_MAP[planFromUrl]) {
-      // You can auto-start checkout or highlight the chosen plan here if you want.
       console.log('Plan from URL:', planFromUrl);
     }
   }
@@ -266,7 +263,7 @@ class FinanceFlow {
   }
 
   // -----------------------------------------
-  // SMALL TOAST / NOTIFICATION (optional)
+  // SIMPLE TOAST NOTIFICATIONS (optional)
   // -----------------------------------------
   showNotification(message, type = 'info') {
     const containerId = 'fflow-toast-container';
@@ -291,12 +288,10 @@ class FinanceFlow {
     note.textContent = message;
     container.appendChild(note);
 
-    // slide in
     requestAnimationFrame(() => {
       note.classList.remove('translate-x-full');
     });
 
-    // slide out after 3s
     setTimeout(() => {
       note.classList.add('translate-x-full');
       setTimeout(() => note.remove(), 300);
@@ -311,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.financeFlow = new FinanceFlow();
 });
 
-// Export for CommonJS (optional; harmless in browser)
+// Export for CommonJS (optional)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = FinanceFlow;
 }
