@@ -200,101 +200,73 @@ class FinanceFlow {
   // -----------------------------------------
  // STRIPE PLAN BUTTONS & CHECKOUT
 // -----------------------------------------
-setupPlanButtons() {
-  // Buttons with data-plan attributes
-  const planButtons = document.querySelectorAll('[data-plan]');
+  setupPlanButtons() {
+    // Buttons with data-plan attributes
+    const planButtons = document.querySelectorAll('[data-plan]');
 
-  planButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const planType = btn.dataset.plan;
-      if (!planType) return;
+    planButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const planType = btn.dataset.plan;
+        if (!planType) return;
 
-      // 1) Visually highlight the selected button
-      planButtons.forEach(b => {
-        b.classList.remove(
+        // 1) Visually highlight the selected button
+        planButtons.forEach(b => {
+          b.classList.remove(
+            'ring-2',
+            'ring-purple-500',
+            'bg-purple-50',
+            'text-purple-700',
+            'scale-105'
+          );
+        });
+
+        btn.classList.add(
           'ring-2',
           'ring-purple-500',
           'bg-purple-50',
           'text-purple-700',
           'scale-105'
         );
+
+        // 2) Trigger checkout
+        this.startCheckout(planType);
       });
-
-      btn.classList.add(
-        'ring-2',
-        'ring-purple-500',
-        'bg-purple-50',
-        'text-purple-700',
-        'scale-105'
-      );
-
-      // 2) Trigger checkout
-      async startCheckout(planType) {
-  try {
-    const priceId = PRICE_MAP[planType];
-    if (!priceId) {
-      alert(`Unknown plan: ${planType}. Check PRICE_MAP in main.js.`);
-      return;
-    }
-
-    const response = await Auth.post('/api/create-checkout-session', { priceId });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Checkout HTTP ${response.status}: ${text}`);
-    }
-
-    const data = await response.json();
-    if (data && data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || 'No checkout URL returned from server');
-    }
-  } catch (e) {
-    console.error('Checkout error:', e);
-    alert('Could not start checkout: ' + e.message);
-  }
-}
-
-  // Optional: ?plan=professional in URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const planFromUrl = urlParams.get('plan');
-  if (planFromUrl && PRICE_MAP[planFromUrl]) {
-    console.log('Plan from URL:', planFromUrl);
-  }
-}
-
-async startCheckout(planType) {
-  try {
-    const priceId = PRICE_MAP[planType];
-    if (!priceId) {
-      alert(`Unknown plan: ${planType}. Check PRICE_MAP in main.js.`);
-      return;
-    }
-
-    const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ priceId })
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Checkout HTTP ${response.status}: ${text}`);
+    // Optional: ?plan=professional in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const planFromUrl = urlParams.get('plan');
+    if (planFromUrl && PRICE_MAP[planFromUrl]) {
+      console.log('Plan from URL:', planFromUrl);
     }
-
-    const data = await response.json();
-    if (data && data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error(data.error || 'No checkout URL returned from server');
-    }
-  } catch (e) {
-    console.error('Checkout error:', e);
-    alert('Could not start checkout: ' + e.message);
   }
-}
+
+  async startCheckout(planType) {
+    try {
+      const priceId = PRICE_MAP[planType];
+      if (!priceId) {
+        alert(`Unknown plan: ${planType}. Check PRICE_MAP in main.js.`);
+        return;
+      }
+
+      const response = await Auth.post('/api/create-checkout-session', { priceId });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Checkout HTTP ${response.status}: ${text}`);
+      }
+
+      const data = await response.json();
+      if (data && data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'No checkout URL returned from server');
+      }
+    } catch (e) {
+      console.error('Checkout error:', e);
+      alert('Could not start checkout: ' + e.message);
+    }
+  }
 
   // -----------------------------------------
   // SIMPLE TOAST NOTIFICATIONS (optional)
