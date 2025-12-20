@@ -148,18 +148,6 @@ class FinanceFlow {
     }
   }
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-      this.applyDashboardData(data);
-    } catch (err) {
-      console.warn('Dashboard fetch failed, using demo data instead:', err);
-      this.useDemoDashboard();
-    }
-  }
-
   applyDashboardData(data) {
     const byId = id => document.getElementById(id);
 
