@@ -132,11 +132,21 @@ class FinanceFlow {
   // -----------------------------------------
   // DASHBOARD DATA (API + fallback)
   // -----------------------------------------
-  async fetchDashboard() {
+    async fetchDashboard() {
     try {
-      const res = await fetch(`${API_BASE}/api/dashboard`, {
-        credentials: 'include'
-      });
+      const res = await Auth.get('/api/dashboard');
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      this.applyDashboardData(data);
+    } catch (err) {
+      console.warn('Dashboard fetch failed, using demo data instead:', err);
+      this.useDemoDashboard();
+    }
+  }
 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
@@ -187,11 +197,9 @@ class FinanceFlow {
   // -----------------------------------------
   // BACKEND HEALTH CHECK (optional)
   // -----------------------------------------
-  async checkWebhookHealth() {
+    async checkWebhookHealth() {
     try {
-      const res = await fetch(`${API_BASE}/api/health`, {
-        credentials: 'include'
-      });
+      const res = await Auth.get('/api/health');
       if (!res.ok) return;
 
       const data = await res.json();
@@ -233,9 +241,32 @@ setupPlanButtons() {
       );
 
       // 2) Trigger checkout
-      this.startCheckout(planType);
-    });
-  });
+      async startCheckout(planType) {
+  try {
+    const priceId = PRICE_MAP[planType];
+    if (!priceId) {
+      alert(`Unknown plan: ${planType}. Check PRICE_MAP in main.js.`);
+      return;
+    }
+
+    const response = await Auth.post('/api/create-checkout-session', { priceId });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Checkout HTTP ${response.status}: ${text}`);
+    }
+
+    const data = await response.json();
+    if (data && data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'No checkout URL returned from server');
+    }
+  } catch (e) {
+    console.error('Checkout error:', e);
+    alert('Could not start checkout: ' + e.message);
+  }
+}
 
   // Optional: ?plan=professional in URL
   const urlParams = new URLSearchParams(window.location.search);
