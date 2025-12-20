@@ -600,5 +600,13 @@
         // Domain-specific setup complete
         console.log('✅ FinanceFlow configured for https://financeflow.skillsoul.store');
     </script>
+       <script src="auth.js"></script>
+    <script>
+      // Require authentication
+      if (Auth && !Auth.isAuthenticated()) {
+        window.location.href = '/login.html';
+      }
+    </script>
+    <script src="main.js"></script>
 </body>
 </html>
