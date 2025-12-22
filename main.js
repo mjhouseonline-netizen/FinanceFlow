@@ -1,5 +1,3 @@
-const API_BASE = 'https://financeflow-api-4mua.onrender.com';
-
 const PRICE_MAP = {
   starter: 'price_1SbZFqFj4r8OeJwWBlvD7LFZ',
   professional: 'price_1SbZHFFj4r8OeJwWnKSUaDiu',
