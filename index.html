@@ -367,5 +367,14 @@
       <p class="text-gray-400">&copy; 2025 FinanceFlow. AI-powered financial management for freelancers.</p>
     </div>
   </footer>
+
+  <script src="auth.js"></script>
+  <script>
+    // Require authentication
+    if (Auth && !Auth.isAuthenticated()) {
+      window.location.href = '/login.html';
+    }
+  </script>
+  <script src="main.js" defer></script>
 </body>
 </html>
