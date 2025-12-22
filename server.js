@@ -28,9 +28,10 @@ const pool = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// NEW: auto-create users table on startup
+// NEW: auto-create all tables on startup
 async function initDb() {
   try {
+    // Users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -42,6 +43,54 @@ async function initDb() {
       );
     `);
     console.log('✅ users table is ready');
+
+    // Clients table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS clients (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        email TEXT,
+        revenue DECIMAL(10,2) DEFAULT 0,
+        balance DECIMAL(10,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✅ clients table is ready');
+
+    // Expenses table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS expenses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        amount DECIMAL(10,2) NOT NULL,
+        description TEXT,
+        date DATE NOT NULL,
+        client TEXT,
+        category TEXT,
+        tax_deductible BOOLEAN DEFAULT false,
+        receipt_url TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✅ expenses table is ready');
+
+    // Invoices table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        client_name TEXT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        due_date DATE NOT NULL,
+        paid_date DATE,
+        items JSONB,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    console.log('✅ invoices table is ready');
+
   } catch (err) {
     console.error('DB init error:', err);
   }
@@ -213,16 +262,266 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 });
 
-// ----------  DASHBOARD DATA (still demo)  ----------
-app.get('/api/dashboard', async (_req, res) => {
-  // TODO in a later step: compute per-user metrics from DB
-  res.json({
-    revenue: 47250,
-    subscriptions: 328,
-    outstanding: 12300,
-    budgetPercent: 68,
-    taxDeductible: 8940
-  });
+// ----------  DASHBOARD DATA (user-specific)  ----------
+app.get('/api/dashboard', requireAuth, async (req, res) => {
+  try {
+    // Get total expenses
+    const expensesResult = await pool.query(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    // Get total tax deductible expenses
+    const taxResult = await pool.query(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE user_id = $1 AND tax_deductible = true',
+      [req.user.id]
+    );
+
+    // Get total revenue from clients
+    const revenueResult = await pool.query(
+      'SELECT COALESCE(SUM(revenue), 0) as total FROM clients WHERE user_id = $1',
+      [req.user.id]
+    );
+
+    // Get outstanding invoices
+    const outstandingResult = await pool.query(
+      'SELECT COALESCE(SUM(amount), 0) as total FROM invoices WHERE user_id = $1 AND status = $2',
+      [req.user.id, 'pending']
+    );
+
+    // Get count of active clients (clients with revenue > 0)
+    const clientsResult = await pool.query(
+      'SELECT COUNT(*) as count FROM clients WHERE user_id = $1 AND revenue > 0',
+      [req.user.id]
+    );
+
+    const totalExpenses = parseFloat(expensesResult.rows[0].total);
+    const totalRevenue = parseFloat(revenueResult.rows[0].total);
+
+    // Calculate budget percentage (expenses / revenue * 100)
+    let budgetPercent = 0;
+    if (totalRevenue > 0) {
+      budgetPercent = Math.round((totalExpenses / totalRevenue) * 100);
+    }
+
+    res.json({
+      revenue: totalRevenue,
+      subscriptions: parseInt(clientsResult.rows[0].count),
+      outstanding: parseFloat(outstandingResult.rows[0].total),
+      budgetPercent: budgetPercent,
+      taxDeductible: parseFloat(taxResult.rows[0].total)
+    });
+  } catch (err) {
+    console.error('Dashboard error:', err);
+    res.status(500).json({ error: 'Could not load dashboard data' });
+  }
+});
+
+// ----------  EXPENSES CRUD  ----------
+// GET /api/expenses - Get all expenses for logged-in user
+app.get('/api/expenses', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM expenses WHERE user_id = $1 ORDER BY date DESC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get expenses error:', err);
+    res.status(500).json({ error: 'Could not load expenses' });
+  }
+});
+
+// POST /api/expenses - Create new expense
+app.post('/api/expenses', requireAuth, async (req, res) => {
+  try {
+    const { amount, description, date, client, category, tax_deductible, receipt_url } = req.body;
+
+    if (!amount || !date) {
+      return res.status(400).json({ error: 'Amount and date are required' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO expenses (user_id, amount, description, date, client, category, tax_deductible, receipt_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [req.user.id, amount, description, date, client, category, tax_deductible || false, receipt_url]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create expense error:', err);
+    res.status(500).json({ error: 'Could not create expense' });
+  }
+});
+
+// DELETE /api/expenses/:id - Delete expense
+app.delete('/api/expenses/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM expenses WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    res.json({ message: 'Expense deleted' });
+  } catch (err) {
+    console.error('Delete expense error:', err);
+    res.status(500).json({ error: 'Could not delete expense' });
+  }
+});
+
+// ----------  CLIENTS CRUD  ----------
+// GET /api/clients - Get all clients for logged-in user
+app.get('/api/clients', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM clients WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get clients error:', err);
+    res.status(500).json({ error: 'Could not load clients' });
+  }
+});
+
+// POST /api/clients - Create new client
+app.post('/api/clients', requireAuth, async (req, res) => {
+  try {
+    const { name, email, revenue, balance } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Client name is required' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO clients (user_id, name, email, revenue, balance)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [req.user.id, name, email, revenue || 0, balance || 0]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create client error:', err);
+    res.status(500).json({ error: 'Could not create client' });
+  }
+});
+
+// DELETE /api/clients/:id - Delete client
+app.delete('/api/clients/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM clients WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    res.json({ message: 'Client deleted' });
+  } catch (err) {
+    console.error('Delete client error:', err);
+    res.status(500).json({ error: 'Could not delete client' });
+  }
+});
+
+// ----------  INVOICES CRUD  ----------
+// GET /api/invoices - Get all invoices for logged-in user
+app.get('/api/invoices', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM invoices WHERE user_id = $1 ORDER BY due_date DESC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get invoices error:', err);
+    res.status(500).json({ error: 'Could not load invoices' });
+  }
+});
+
+// POST /api/invoices - Create new invoice
+app.post('/api/invoices', requireAuth, async (req, res) => {
+  try {
+    const { client_name, amount, status, due_date, paid_date, items } = req.body;
+
+    if (!client_name || !amount || !due_date) {
+      return res.status(400).json({ error: 'Client name, amount, and due date are required' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO invoices (user_id, client_name, amount, status, due_date, paid_date, items)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [req.user.id, client_name, amount, status || 'pending', due_date, paid_date, items]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create invoice error:', err);
+    res.status(500).json({ error: 'Could not create invoice' });
+  }
+});
+
+// PUT /api/invoices/:id - Update invoice (e.g., mark as paid)
+app.put('/api/invoices/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { client_name, amount, status, due_date, paid_date, items } = req.body;
+
+    const result = await pool.query(
+      `UPDATE invoices
+       SET client_name = COALESCE($1, client_name),
+           amount = COALESCE($2, amount),
+           status = COALESCE($3, status),
+           due_date = COALESCE($4, due_date),
+           paid_date = $5,
+           items = COALESCE($6, items)
+       WHERE id = $7 AND user_id = $8
+       RETURNING *`,
+      [client_name, amount, status, due_date, paid_date, items, id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update invoice error:', err);
+    res.status(500).json({ error: 'Could not update invoice' });
+  }
+});
+
+// DELETE /api/invoices/:id - Delete invoice
+app.delete('/api/invoices/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM invoices WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    res.json({ message: 'Invoice deleted' });
+  } catch (err) {
+    console.error('Delete invoice error:', err);
+    res.status(500).json({ error: 'Could not delete invoice' });
+  }
 });
 
 // ----------  404 HANDLER  ----------
