@@ -4,8 +4,13 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
+
+// ----------  GEMINI AI SETUP  ----------
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // ----------  MIDDLEWARE  ----------
 app.use(express.json());
@@ -521,6 +526,201 @@ app.delete('/api/invoices/:id', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Delete invoice error:', err);
     res.status(500).json({ error: 'Could not delete invoice' });
+  }
+});
+
+// ----------  AI ENDPOINTS  ----------
+// POST /api/ai/categorize-expense - Auto-categorize an expense
+app.post('/api/ai/categorize-expense', requireAuth, async (req, res) => {
+  try {
+    const { description, amount } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ error: 'Description is required' });
+    }
+
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({
+        error: 'AI service not configured',
+        category: 'Other',
+        tax_deductible: false
+      });
+    }
+
+    const prompt = `You are a financial categorization assistant. Categorize the following business expense and determine if it's tax deductible.
+
+Expense: "${description}"
+Amount: $${amount || 'unknown'}
+
+Return a JSON object with:
+- category: One of [Software, Equipment, Travel, Meals, Marketing, Office Supplies, Utilities, Professional Services, Other]
+- tax_deductible: boolean (true if likely tax deductible for a freelancer/business)
+- confidence: number between 0-1
+- reasoning: brief explanation (max 50 words)
+
+Only return valid JSON, no other text.`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const response = result.response.text();
+
+    // Extract JSON from response (handle markdown code blocks)
+    let jsonText = response.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
+
+    const aiResponse = JSON.parse(jsonText);
+
+    res.json({
+      category: aiResponse.category || 'Other',
+      tax_deductible: aiResponse.tax_deductible || false,
+      confidence: aiResponse.confidence || 0.7,
+      reasoning: aiResponse.reasoning || 'AI categorization'
+    });
+  } catch (err) {
+    console.error('AI categorization error:', err);
+    res.status(500).json({
+      error: 'AI categorization failed',
+      category: 'Other',
+      tax_deductible: false
+    });
+  }
+});
+
+// POST /api/ai/tax-insights - Get tax deduction insights
+app.post('/api/ai/tax-insights', requireAuth, async (req, res) => {
+  try {
+    const { description, amount, category } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ error: 'Description is required' });
+    }
+
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({
+        error: 'AI service not configured',
+        is_deductible: false,
+        tips: []
+      });
+    }
+
+    const prompt = `You are a tax advisor for freelancers and small businesses. Analyze this expense for tax deductibility.
+
+Expense: "${description}"
+Amount: $${amount || 'unknown'}
+Category: ${category || 'unknown'}
+
+Return a JSON object with:
+- is_deductible: boolean
+- deduction_percentage: number (0-100, percentage that's typically deductible)
+- tips: array of 2-3 brief tips for maximizing this deduction (each max 40 words)
+- documentation_needed: array of recommended documentation to keep
+
+Only return valid JSON, no other text.`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const response = result.response.text();
+
+    // Extract JSON from response
+    let jsonText = response.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
+
+    const aiResponse = JSON.parse(jsonText);
+
+    res.json({
+      is_deductible: aiResponse.is_deductible || false,
+      deduction_percentage: aiResponse.deduction_percentage || 0,
+      tips: aiResponse.tips || [],
+      documentation_needed: aiResponse.documentation_needed || []
+    });
+  } catch (err) {
+    console.error('AI tax insights error:', err);
+    res.status(500).json({
+      error: 'AI tax insights failed',
+      is_deductible: false,
+      tips: []
+    });
+  }
+});
+
+// GET /api/ai/financial-insights - Get personalized financial insights
+app.get('/api/ai/financial-insights', requireAuth, async (req, res) => {
+  try {
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({
+        error: 'AI service not configured',
+        insights: []
+      });
+    }
+
+    // Get user's recent expenses
+    const expensesResult = await pool.query(
+      'SELECT category, SUM(amount) as total FROM expenses WHERE user_id = $1 AND date >= CURRENT_DATE - INTERVAL \'30 days\' GROUP BY category',
+      [req.user.id]
+    );
+
+    // Get user's total revenue and expenses
+    const summaryResult = await pool.query(
+      `SELECT
+        COALESCE(SUM(e.amount), 0) as total_expenses,
+        COALESCE((SELECT SUM(revenue) FROM clients WHERE user_id = $1), 0) as total_revenue
+       FROM expenses e WHERE e.user_id = $1`,
+      [req.user.id]
+    );
+
+    const expenses = expensesResult.rows;
+    const summary = summaryResult.rows[0];
+
+    const prompt = `You are a financial advisor for freelancers. Analyze this spending data and provide insights.
+
+Monthly Expenses by Category:
+${expenses.map(e => `- ${e.category || 'Other'}: $${parseFloat(e.total).toFixed(2)}`).join('\n')}
+
+Total Expenses: $${parseFloat(summary.total_expenses).toFixed(2)}
+Total Revenue: $${parseFloat(summary.total_revenue).toFixed(2)}
+
+Return a JSON object with:
+- insights: array of 3-5 actionable insights (each max 60 words)
+- warnings: array of potential issues or overspending areas
+- recommendations: array of 2-3 specific recommendations to improve finances
+- estimated_tax_savings: number (estimated potential tax savings from proper deduction tracking)
+
+Only return valid JSON, no other text.`;
+
+    const result = await geminiModel.generateContent(prompt);
+    const response = result.response.text();
+
+    // Extract JSON from response
+    let jsonText = response.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
+
+    const aiResponse = JSON.parse(jsonText);
+
+    res.json({
+      insights: aiResponse.insights || [],
+      warnings: aiResponse.warnings || [],
+      recommendations: aiResponse.recommendations || [],
+      estimated_tax_savings: aiResponse.estimated_tax_savings || 0
+    });
+  } catch (err) {
+    console.error('AI financial insights error:', err);
+    res.status(500).json({
+      error: 'AI financial insights failed',
+      insights: []
+    });
   }
 });
 
