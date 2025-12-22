@@ -590,12 +590,15 @@
             }, 3000);
         }
 
-        // Close modal on backdrop click
-        document.getElementById('planModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hidePlanModal();
-            }
-        });
+      // Close modal on backdrop click
+const planModal = document.getElementById('planModal');
+if (planModal) {
+    planModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            hidePlanModal();
+        }
+    });
+}
 
         // Domain-specific setup complete
         console.log('✅ FinanceFlow configured for https://financeflow.skillsoul.store');
