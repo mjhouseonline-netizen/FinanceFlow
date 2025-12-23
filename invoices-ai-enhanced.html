@@ -606,9 +606,11 @@
                 try {
                     const response = await Auth.get('/api/invoices');
                     const data = await response.json();
-                    this.invoices = data.invoices || [];
+                    // API returns array directly, not { invoices: [...] }
+                    this.invoices = Array.isArray(data) ? data : [];
                     this.filteredInvoices = [...this.invoices];
                     this.renderInvoices();
+                    console.log('Loaded invoices:', this.invoices.length);
                 } catch (error) {
                     console.error('Failed to load invoices:', error);
                     this.invoices = [];

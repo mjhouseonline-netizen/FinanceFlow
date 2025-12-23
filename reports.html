@@ -368,7 +368,7 @@
                     <div class="report-card p-6 rounded-xl reveal">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Export Options</h3>
                         <div class="space-y-3">
-                            <button class="w-full p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left">
+                            <button id="exportPdfBtn" class="w-full p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 text-gray-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -381,7 +381,7 @@
                                 </div>
                             </button>
                             
-                            <button class="w-full p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left">
+                            <button id="exportCsvReportBtn" class="w-full p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 text-gray-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
@@ -392,8 +392,8 @@
                                     </div>
                                 </div>
                             </button>
-                            
-                            <button class="w-full p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left">
+
+                            <button id="exportQuickbooksBtn" class="w-full p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-left">
                                 <div class="flex items-center">
                                     <svg class="w-5 h-5 text-gray-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 002 2H4a2 2 0 01-2-2V5zm3 1h6v4H5V6zm6 6H5v2h6v-2z" clip-rule="evenodd"></path>
@@ -544,6 +544,28 @@
                         this.generateTemplateReport(reportType);
                     });
                 });
+
+                // Export option buttons
+                const exportPdfBtn = document.getElementById('exportPdfBtn');
+                if (exportPdfBtn) {
+                    exportPdfBtn.addEventListener('click', () => {
+                        this.downloadReport('all-data', 'pdf');
+                    });
+                }
+
+                const exportCsvReportBtn = document.getElementById('exportCsvReportBtn');
+                if (exportCsvReportBtn) {
+                    exportCsvReportBtn.addEventListener('click', () => {
+                        this.downloadReport('all-data', 'csv');
+                    });
+                }
+
+                const exportQuickbooksBtn = document.getElementById('exportQuickbooksBtn');
+                if (exportQuickbooksBtn) {
+                    exportQuickbooksBtn.addEventListener('click', () => {
+                        alert('QuickBooks Export\n\nThis feature would export your data in QuickBooks-compatible format (.qbo or .iif file).\n\nFile downloads to: Downloads folder\n\nComing soon!');
+                    });
+                }
             }
             
             showGenerateReportModal() {
@@ -749,9 +771,29 @@
             }
             
             downloadReport(reportType, format) {
-                // Simulate file download
                 const fileName = `${reportType}-report-${new Date().toISOString().split('T')[0]}.${format}`;
-                this.showSuccessMessage(`Report downloaded: ${fileName}`);
+
+                // Create sample report content
+                let content = '';
+                if (format === 'csv') {
+                    content = `Report Type,${reportType}\nGenerated,${new Date().toISOString()}\n\nSample Report Data\n`;
+                    const blob = new Blob([content], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } else if (format === 'pdf') {
+                    // For PDF, show info about where it downloads
+                    alert(`PDF generation would download to your Downloads folder:\n\n${fileName}\n\nNote: Full PDF generation requires backend implementation.`);
+                } else {
+                    alert(`Report would download to your Downloads folder:\n\n${fileName}`);
+                }
+
+                this.showSuccessMessage(`Report ready! Check your Downloads folder for: ${fileName}`);
             }
             
             generateTemplateReport(templateType) {

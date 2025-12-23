@@ -439,9 +439,11 @@
                 try {
                     const response = await Auth.get('/api/clients');
                     const data = await response.json();
-                    this.clients = data.clients || [];
+                    // API returns array directly, not { clients: [...] }
+                    this.clients = Array.isArray(data) ? data : [];
                     this.filteredClients = [...this.clients];
                     this.renderClients();
+                    console.log('Loaded clients:', this.clients.length);
                 } catch (error) {
                     console.error('Failed to load clients:', error);
                     this.clients = [];

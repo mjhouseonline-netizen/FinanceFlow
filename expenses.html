@@ -409,9 +409,11 @@
                 try {
                     const response = await Auth.get('/api/expenses');
                     const data = await response.json();
-                    this.expenses = data.expenses || [];
+                    // API returns array directly, not { expenses: [...] }
+                    this.expenses = Array.isArray(data) ? data : [];
                     this.filteredExpenses = [...this.expenses];
                     this.renderExpenses();
+                    console.log('Loaded expenses:', this.expenses.length);
                 } catch (error) {
                     console.error('Failed to load expenses:', error);
                     this.expenses = [];
