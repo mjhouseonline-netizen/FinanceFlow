@@ -48,6 +48,7 @@ class FinanceFlow {
     this.initializeCharts();
     this.setupScrollReveal();
     this.setupPlanButtons();
+    this.setupAIInsights();
     this.fetchDashboard();
     this.checkWebhookHealth();
   }
@@ -236,6 +237,80 @@ class FinanceFlow {
     const planFromUrl = urlParams.get('plan');
     if (planFromUrl && PRICE_MAP[planFromUrl]) {
       console.log('Plan from URL:', planFromUrl);
+    }
+  }
+
+  setupAIInsights() {
+    const refreshBtn = document.getElementById('refreshAIInsights');
+    if (!refreshBtn) return;
+
+    refreshBtn.addEventListener('click', () => {
+      this.fetchAIInsights();
+    });
+  }
+
+  async fetchAIInsights() {
+    const loadingEl = document.getElementById('aiInsightsLoading');
+    const contentEl = document.getElementById('aiInsightsContent');
+
+    if (!loadingEl || !contentEl) return;
+
+    try {
+      // Show loading
+      loadingEl.classList.remove('hidden');
+      contentEl.classList.add('hidden');
+
+      const response = await Auth.get('/api/ai/financial-insights');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch AI insights');
+      }
+
+      const data = await response.json();
+
+      // Build insights HTML
+      let html = '';
+
+      if (data.insights && data.insights.length > 0) {
+        html += '<div class="mb-4"><h4 class="font-semibold text-gray-900 mb-2 flex items-center"><svg class="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Key Insights</h4><ul class="space-y-2">';
+        data.insights.forEach(insight => {
+          html += `<li class="text-sm text-gray-700 pl-7">• ${insight}</li>`;
+        });
+        html += '</ul></div>';
+      }
+
+      if (data.warnings && data.warnings.length > 0) {
+        html += '<div class="mb-4"><h4 class="font-semibold text-gray-900 mb-2 flex items-center"><svg class="w-5 h-5 mr-2 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>Warnings</h4><ul class="space-y-2">';
+        data.warnings.forEach(warning => {
+          html += `<li class="text-sm text-amber-700 pl-7">⚠ ${warning}</li>`;
+        });
+        html += '</ul></div>';
+      }
+
+      if (data.recommendations && data.recommendations.length > 0) {
+        html += '<div class="mb-4"><h4 class="font-semibold text-gray-900 mb-2 flex items-center"><svg class="w-5 h-5 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"></path></svg>Recommendations</h4><ul class="space-y-2">';
+        data.recommendations.forEach(rec => {
+          html += `<li class="text-sm text-gray-700 pl-7">💡 ${rec}</li>`;
+        });
+        html += '</ul></div>';
+      }
+
+      if (data.estimated_tax_savings > 0) {
+        html += `<div class="bg-green-50 border border-green-200 rounded-lg p-4 mt-4"><div class="flex items-center"><svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg><div><p class="text-sm font-semibold text-green-900">Estimated Tax Savings</p><p class="text-2xl font-bold text-green-700">$${data.estimated_tax_savings.toFixed(2)}</p></div></div></div>`;
+      }
+
+      if (!html) {
+        html = '<div class="text-center py-8 text-gray-500"><p>No insights available yet.</p><p class="text-sm text-gray-400 mt-1">Add some expenses and clients to get personalized advice!</p></div>';
+      }
+
+      contentEl.innerHTML = html;
+
+    } catch (error) {
+      console.error('AI insights error:', error);
+      contentEl.innerHTML = '<div class="text-center py-8 text-red-500"><p>Failed to load AI insights</p><p class="text-sm text-gray-500 mt-1">Make sure you\'re logged in and have added the GEMINI_API_KEY to your environment.</p></div>';
+    } finally {
+      loadingEl.classList.add('hidden');
+      contentEl.classList.remove('hidden');
     }
   }
 
