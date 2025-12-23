@@ -588,91 +588,31 @@
         // Enhanced Invoices page with AI Invoice Generator
         class InvoicesPageEnhanced {
             constructor() {
-                this.invoices = [
-                    {
-                        id: 'INV-2025-001',
-                        client: 'Acme Corp',
-                        amount: 2500,
-                        date: '2025-11-20',
-                        dueDate: '2025-12-20',
-                        status: 'overdue',
-                        items: ['Website Development', 'SEO Optimization']
-                    },
-                    {
-                        id: 'INV-2025-002',
-                        client: 'Creative Agency',
-                        amount: 3200,
-                        date: '2025-11-25',
-                        dueDate: '2025-12-25',
-                        status: 'paid',
-                        items: ['Brand Design', 'Marketing Materials']
-                    },
-                    {
-                        id: 'INV-2025-003',
-                        client: 'Tech Startup',
-                        amount: 1800,
-                        date: '2025-11-28',
-                        dueDate: '2025-12-28',
-                        status: 'pending',
-                        items: ['App Development', 'Testing']
-                    },
-                    {
-                        id: 'INV-2025-004',
-                        client: 'Healthcare Solutions',
-                        amount: 4500,
-                        date: '2025-12-01',
-                        dueDate: '2026-01-01',
-                        status: 'pending',
-                        items: ['System Integration', 'Training']
-                    },
-                    {
-                        id: 'INV-2025-005',
-                        client: 'Retail Chain Inc',
-                        amount: 2100,
-                        date: '2025-12-03',
-                        dueDate: '2026-01-03',
-                        status: 'paid',
-                        items: ['POS System', 'Inventory Management']
-                    },
-                    {
-                        id: 'INV-2025-006',
-                        client: 'Financial Services Co',
-                        amount: 3800,
-                        date: '2025-12-05',
-                        dueDate: '2026-01-05',
-                        status: 'pending',
-                        items: ['Security Audit', 'Compliance Review']
-                    },
-                    {
-                        id: 'INV-2025-007',
-                        client: 'Education Platform',
-                        amount: 1650,
-                        date: '2025-12-07',
-                        dueDate: '2026-01-07',
-                        status: 'paid',
-                        items: ['Learning Management System']
-                    },
-                    {
-                        id: 'INV-2025-008',
-                        client: 'Tech Startup',
-                        amount: 1200,
-                        date: '2025-12-10',
-                        dueDate: '2026-01-10',
-                        status: 'overdue',
-                        items: ['Additional Features', 'Bug Fixes']
-                    }
-                ];
-                
-                this.filteredInvoices = [...this.invoices];
+                this.invoices = [];
+                this.filteredInvoices = [];
                 this.aiGeneratorVisible = false;
                 this.init();
             }
-            
-            init() {
+
+            async init() {
                 this.setupEventListeners();
-                this.renderInvoices();
+                await this.loadInvoices();
                 this.initializeChart();
                 this.setupScrollReveal();
+            }
+
+            async loadInvoices() {
+                try {
+                    const response = await Auth.get('/api/invoices');
+                    const data = await response.json();
+                    this.invoices = data.invoices || [];
+                    this.filteredInvoices = [...this.invoices];
+                    this.renderInvoices();
+                } catch (error) {
+                    console.error('Failed to load invoices:', error);
+                    this.invoices = [];
+                    this.filteredInvoices = [];
+                }
             }
             
             setupEventListeners() {
@@ -1261,32 +1201,40 @@
                 }
             }
             
-            handleInvoiceSubmit() {
+            async handleInvoiceSubmit() {
                 const client = document.getElementById('invoiceClient').value;
                 const amount = parseFloat(document.getElementById('total').textContent.replace('$', ''));
-                
+
                 if (!client || amount <= 0) {
                     alert('Please fill in all required fields and add at least one line item.');
                     return;
                 }
-                
-                const newInvoice = {
-                    id: `INV-2025-${String(this.invoices.length + 1).padStart(3, '0')}`,
-                    client: client,
-                    amount: amount,
-                    date: document.getElementById('invoiceDate').value,
-                    dueDate: document.getElementById('dueDate').value,
-                    status: 'pending',
-                    items: Array.from(document.querySelectorAll('.line-item input[placeholder="Description"]'))
-                        .map(input => input.value)
-                        .filter(desc => desc.trim() !== '')
-                };
-                
-                this.invoices.unshift(newInvoice);
-                this.applyFilters();
-                this.hideCreateInvoiceModal();
-                this.showSuccessMessage('Invoice created successfully!');
-                this.initializeChart(); // Refresh chart
+
+                const items = Array.from(document.querySelectorAll('.line-item input[placeholder="Description"]'))
+                    .map(input => input.value)
+                    .filter(desc => desc.trim() !== '');
+
+                try {
+                    const response = await Auth.post('/api/invoices', {
+                        client_name: client,
+                        amount: amount,
+                        status: 'pending',
+                        due_date: document.getElementById('dueDate').value,
+                        items: items
+                    });
+
+                    if (response.ok) {
+                        await this.loadInvoices();
+                        this.hideCreateInvoiceModal();
+                        this.showSuccessMessage('Invoice created successfully!');
+                        this.initializeChart();
+                    } else {
+                        this.showSuccessMessage('Failed to create invoice');
+                    }
+                } catch (error) {
+                    console.error('Error creating invoice:', error);
+                    this.showSuccessMessage('Failed to create invoice');
+                }
             }
             
             saveDraft() {

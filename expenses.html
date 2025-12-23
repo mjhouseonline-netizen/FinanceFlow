@@ -391,29 +391,31 @@
         // Expenses page specific functionality
         class ExpensesPage {
             constructor() {
-                this.expenses = [
-                    { id: 1, amount: 52.99, description: 'Adobe Creative Suite', category: 'Software', date: '2025-12-05', client: 'Personal', taxDeductible: true, receipt: 'receipt_001.jpg' },
-                    { id: 2, amount: 28.50, description: 'Client Lunch - Starbucks', category: 'Meals', date: '2025-12-04', client: 'Acme Corp', taxDeductible: true, receipt: 'receipt_002.jpg' },
-                    { id: 3, amount: 89.99, description: 'Office Supplies', category: 'Equipment', date: '2025-12-03', client: 'Personal', taxDeductible: true, receipt: 'receipt_003.jpg' },
-                    { id: 4, amount: 150.00, description: 'Software License', category: 'Software', date: '2025-12-02', client: 'Personal', taxDeductible: true, receipt: 'receipt_004.jpg' },
-                    { id: 5, amount: 75.50, description: 'Business Dinner', category: 'Meals', date: '2025-12-01', client: 'Tech Startup', taxDeductible: true, receipt: 'receipt_005.jpg' },
-                    { id: 6, amount: 45.00, description: 'Cloud Storage', category: 'Software', date: '2025-11-30', client: 'Personal', taxDeductible: true, receipt: 'receipt_006.jpg' },
-                    { id: 7, amount: 120.00, description: 'Flight to Conference', category: 'Travel', date: '2025-11-29', client: 'Creative Agency', taxDeductible: true, receipt: 'receipt_007.jpg' },
-                    { id: 8, amount: 35.75, description: 'Uber to Airport', category: 'Travel', date: '2025-11-29', client: 'Creative Agency', taxDeductible: true, receipt: 'receipt_008.jpg' },
-                    { id: 9, amount: 200.00, description: 'Conference Ticket', category: 'Professional Development', date: '2025-11-28', client: 'Personal', taxDeductible: true, receipt: 'receipt_009.jpg' },
-                    { id: 10, amount: 65.00, description: 'Marketing Materials', category: 'Marketing', date: '2025-11-27', client: 'Personal', taxDeductible: true, receipt: 'receipt_010.jpg' }
-                ];
-                
-                this.filteredExpenses = [...this.expenses];
+                this.expenses = [];
+                this.filteredExpenses = [];
                 this.currentFilter = 'All';
                 this.init();
             }
-            
-            init() {
+
+            async init() {
                 this.setupEventListeners();
-                this.renderExpenses();
+                await this.loadExpenses();
                 this.setupScrollReveal();
                 this.initializeReceiptUpload();
+            }
+
+            async loadExpenses() {
+                try {
+                    const response = await Auth.get('/api/expenses');
+                    const data = await response.json();
+                    this.expenses = data.expenses || [];
+                    this.filteredExpenses = [...this.expenses];
+                    this.renderExpenses();
+                } catch (error) {
+                    console.error('Failed to load expenses:', error);
+                    this.expenses = [];
+                    this.filteredExpenses = [];
+                }
             }
             
             setupEventListeners() {
@@ -566,29 +568,35 @@
                 document.getElementById('aiCategorySuggestion').classList.add('hidden');
             }
             
-            handleExpenseSubmit() {
+            async handleExpenseSubmit() {
                 const amount = parseFloat(document.getElementById('expenseAmount').value);
                 const description = document.getElementById('expenseDescription').value;
                 const date = document.getElementById('expenseDate').value;
                 const category = document.getElementById('expenseCategory').value;
                 const client = document.getElementById('expenseClient').value;
                 const taxDeductible = document.getElementById('taxDeductible').checked;
-                
-                const newExpense = {
-                    id: this.expenses.length + 1,
-                    amount: amount,
-                    description: description,
-                    category: category,
-                    date: date,
-                    client: client,
-                    taxDeductible: taxDeductible,
-                    receipt: null
-                };
-                
-                this.expenses.unshift(newExpense);
-                this.applyFilters();
-                this.hideAddExpenseModal();
-                this.showSuccessMessage('Expense added successfully!');
+
+                try {
+                    const response = await Auth.post('/api/expenses', {
+                        amount: amount,
+                        description: description,
+                        category: category,
+                        date: date,
+                        client: client,
+                        tax_deductible: taxDeductible
+                    });
+
+                    if (response.ok) {
+                        await this.loadExpenses();
+                        this.hideAddExpenseModal();
+                        this.showSuccessMessage('Expense added successfully!');
+                    } else {
+                        this.showSuccessMessage('Failed to add expense');
+                    }
+                } catch (error) {
+                    console.error('Error adding expense:', error);
+                    this.showSuccessMessage('Failed to add expense');
+                }
             }
             
             handleFilterChange(chip) {
