@@ -246,6 +246,8 @@ class FinanceFlowCFO {
       refreshBtn.addEventListener('click', () => {
         this.fetchAIInsights();
       });
+      // Auto-load insights on page load
+      this.fetchAIInsights();
     }
 
     // Setup bottom AI assistant suggestion buttons
