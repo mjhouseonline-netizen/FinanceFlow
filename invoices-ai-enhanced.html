@@ -617,79 +617,85 @@
             
             setupEventListeners() {
                 // AI Invoice Generator
-                document.getElementById('aiInvoiceGeneratorBtn').addEventListener('click', () => {
+                const el = document.getElementById('aiInvoiceGeneratorBtn'); if (el) el.addEventListener('click', () => {
                     this.toggleAIGenerator();
                 });
                 
-                document.getElementById('toggleAIGenerator').addEventListener('click', () => {
+                const el = document.getElementById('toggleAIGenerator'); if (el) el.addEventListener('click', () => {
                     this.toggleAIGenerator();
                 });
                 
-                document.getElementById('generateAIInvoice').addEventListener('click', () => {
+                const el = document.getElementById('generateAIInvoice'); if (el) el.addEventListener('click', () => {
                     this.generateAIInvoice();
                 });
                 
-                document.getElementById('acceptAIInvoice').addEventListener('click', () => {
+                const el = document.getElementById('acceptAIInvoice'); if (el) el.addEventListener('click', () => {
                     this.acceptAIInvoice();
                 });
 
                 // Modal close buttons
-                document.getElementById('closeAIModal').addEventListener('click', () => {
+                const el = document.getElementById('closeAIModal'); if (el) el.addEventListener('click', () => {
                     this.hideAIModal();
                 });
 
-                document.getElementById('closeModalBtn').addEventListener('click', () => {
+                const el = document.getElementById('closeModalBtn'); if (el) el.addEventListener('click', () => {
                     this.hideAIModal();
                 });
                 
                 // Existing invoice functionality
-                document.getElementById('createInvoiceBtn').addEventListener('click', () => {
+                const el = document.getElementById('createInvoiceBtn'); if (el) el.addEventListener('click', () => {
                     this.showCreateInvoiceModal();
                 });
                 
-                document.getElementById('closeInvoiceModal').addEventListener('click', () => {
+                const el = document.getElementById('closeInvoiceModal'); if (el) el.addEventListener('click', () => {
                     this.hideCreateInvoiceModal();
                 });
                 
-                document.getElementById('cancelInvoiceBtn').addEventListener('click', () => {
+                const el = document.getElementById('cancelInvoiceBtn'); if (el) el.addEventListener('click', () => {
                     this.hideCreateInvoiceModal();
                 });
                 
-                document.getElementById('invoiceForm').addEventListener('submit', (e) => {
+                const el = document.getElementById('invoiceForm'); if (el) el.addEventListener('submit', (e) => {
                     e.preventDefault();
                     this.handleInvoiceSubmit();
                 });
                 
-                document.getElementById('saveDraftBtn').addEventListener('click', () => {
+                const el = document.getElementById('saveDraftBtn'); if (el) el.addEventListener('click', () => {
                     this.saveDraft();
                 });
                 
-                document.getElementById('addLineItem').addEventListener('click', () => {
+                const el = document.getElementById('addLineItem'); if (el) el.addEventListener('click', () => {
                     this.addLineItem();
                 });
                 
-                document.getElementById('statusFilter').addEventListener('change', (e) => {
+                const el = document.getElementById('statusFilter'); if (el) el.addEventListener('change', (e) => {
                     this.handleStatusFilter(e.target.value);
                 });
                 
-                document.getElementById('searchInput').addEventListener('input', (e) => {
+                const el = document.getElementById('searchInput'); if (el) el.addEventListener('input', (e) => {
                     this.handleSearch(e.target.value);
                 });
                 
-                document.getElementById('paymentTerms').addEventListener('change', () => {
+                const el = document.getElementById('paymentTerms'); if (el) el.addEventListener('change', () => {
                     this.updateDueDate();
                 });
                 
-                document.getElementById('invoiceClient').addEventListener('change', () => {
+                const el = document.getElementById('invoiceClient'); if (el) el.addEventListener('change', () => {
                     this.generateAISuggestions();
                 });
             }
             
             // AI Invoice Generator Methods
             toggleAIGenerator() {
+                console.log('Toggle AI Generator clicked');
                 const content = document.getElementById('aiGeneratorContent');
                 const button = document.getElementById('toggleAIGenerator');
-                
+
+                if (!content || !button) {
+                    console.error('AI Generator elements missing:', { content: !!content, button: !!button });
+                    return;
+                }
+
                 if (this.aiGeneratorVisible) {
                     // Hide
                     anime({
@@ -732,13 +738,17 @@
             }
             
             async generateAIInvoice() {
+                console.log('Generate AI Invoice clicked');
                 const projectDescription = document.getElementById('projectDescription').value;
                 const client = document.getElementById('aiClient').value;
                 const projectType = document.getElementById('projectType').value;
                 const estimatedHours = parseFloat(document.getElementById('estimatedHours').value) || 0;
                 const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
 
+                console.log('Invoice data:', { projectDescription, client, projectType, estimatedHours, hourlyRate });
+
                 if (!projectDescription.trim()) {
+                    console.log('No project description provided');
                     this.showErrorMessage('Please provide a project description');
                     return;
                 }
@@ -748,6 +758,7 @@
                 this.showAIThinking();
 
                 try {
+                    console.log('Calling API to generate invoice...');
                     const response = await Auth.post('/api/ai/generate-invoice', {
                         projectDescription,
                         client,
@@ -757,6 +768,7 @@
                     });
 
                     const data = await response.json();
+                    console.log('API response:', { ok: response.ok, data });
 
                     if (response.ok && data.items && data.items.length > 0) {
                         const aiInvoice = {
