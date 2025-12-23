@@ -4,13 +4,14 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const OpenAI = require('openai');
 
 const app = express();
 
-// ----------  GEMINI AI SETUP  ----------
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+// ----------  OPENAI SETUP  ----------
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || ''
+});
 
 // ----------  MIDDLEWARE  ----------
 app.use(express.json());
@@ -540,7 +541,7 @@ app.post('/api/ai/categorize-expense', requireAuth, async (req, res) => {
     }
 
     // Check if API key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       return res.status(503).json({
         error: 'AI service not configured',
         category: 'Other',
@@ -548,7 +549,11 @@ app.post('/api/ai/categorize-expense', requireAuth, async (req, res) => {
       });
     }
 
-    const prompt = `You are a financial categorization assistant. Categorize the following business expense and determine if it's tax deductible.
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{
+        role: 'user',
+        content: `You are a financial categorization assistant. Categorize the following business expense and determine if it's tax deductible.
 
 Expense: "${description}"
 Amount: $${amount || 'unknown'}
@@ -559,10 +564,12 @@ Return a JSON object with:
 - confidence: number between 0-1
 - reasoning: brief explanation (max 50 words)
 
-Only return valid JSON, no other text.`;
+Only return valid JSON, no other text.`
+      }],
+      temperature: 0.7
+    });
 
-    const result = await geminiModel.generateContent(prompt);
-    const response = result.response.text();
+    const response = completion.choices[0].message.content;
 
     // Extract JSON from response (handle markdown code blocks)
     let jsonText = response.trim();
@@ -600,7 +607,7 @@ app.post('/api/ai/tax-insights', requireAuth, async (req, res) => {
     }
 
     // Check if API key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       return res.status(503).json({
         error: 'AI service not configured',
         is_deductible: false,
@@ -608,7 +615,11 @@ app.post('/api/ai/tax-insights', requireAuth, async (req, res) => {
       });
     }
 
-    const prompt = `You are a tax advisor for freelancers and small businesses. Analyze this expense for tax deductibility.
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{
+        role: 'user',
+        content: `You are a tax advisor for freelancers and small businesses. Analyze this expense for tax deductibility.
 
 Expense: "${description}"
 Amount: $${amount || 'unknown'}
@@ -620,10 +631,12 @@ Return a JSON object with:
 - tips: array of 2-3 brief tips for maximizing this deduction (each max 40 words)
 - documentation_needed: array of recommended documentation to keep
 
-Only return valid JSON, no other text.`;
+Only return valid JSON, no other text.`
+      }],
+      temperature: 0.7
+    });
 
-    const result = await geminiModel.generateContent(prompt);
-    const response = result.response.text();
+    const response = completion.choices[0].message.content;
 
     // Extract JSON from response
     let jsonText = response.trim();
@@ -655,7 +668,7 @@ Only return valid JSON, no other text.`;
 app.get('/api/ai/financial-insights', requireAuth, async (req, res) => {
   try {
     // Check if API key is configured
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       return res.status(503).json({
         error: 'AI service not configured',
         insights: []
@@ -680,7 +693,11 @@ app.get('/api/ai/financial-insights', requireAuth, async (req, res) => {
     const expenses = expensesResult.rows;
     const summary = summaryResult.rows[0];
 
-    const prompt = `You are a financial advisor for freelancers. Analyze this spending data and provide insights.
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{
+        role: 'user',
+        content: `You are a financial advisor for freelancers. Analyze this spending data and provide insights.
 
 Monthly Expenses by Category:
 ${expenses.map(e => `- ${e.category || 'Other'}: $${parseFloat(e.total).toFixed(2)}`).join('\n')}
@@ -694,10 +711,12 @@ Return a JSON object with:
 - recommendations: array of 2-3 specific recommendations to improve finances
 - estimated_tax_savings: number (estimated potential tax savings from proper deduction tracking)
 
-Only return valid JSON, no other text.`;
+Only return valid JSON, no other text.`
+      }],
+      temperature: 0.7
+    });
 
-    const result = await geminiModel.generateContent(prompt);
-    const response = result.response.text();
+    const response = completion.choices[0].message.content;
 
     // Extract JSON from response
     let jsonText = response.trim();
