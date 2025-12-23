@@ -743,6 +743,73 @@ Only return valid JSON, no other text.`
   }
 });
 
+// POST /api/ai/generate-invoice - Generate invoice from project description
+app.post('/api/ai/generate-invoice', requireAuth, async (req, res) => {
+  try {
+    const { projectDescription, client, projectType, estimatedHours, hourlyRate } = req.body;
+
+    if (!projectDescription) {
+      return res.status(400).json({ error: 'Project description is required' });
+    }
+
+    // Check if API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(503).json({
+        error: 'AI service not configured',
+        items: []
+      });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{
+        role: 'user',
+        content: `You are an invoice generation assistant for freelancers. Based on the project description, generate detailed invoice line items.
+
+Project Description: "${projectDescription}"
+Client: ${client || 'Not specified'}
+Project Type: ${projectType || 'general'}
+Estimated Hours: ${estimatedHours || 'Not specified'}
+Hourly Rate: $${hourlyRate || 'Not specified'}
+
+Generate a professional invoice with 3-5 line items. Return a JSON object with:
+- items: array of objects with {description: string, quantity: number, rate: number}
+- notes: string (brief professional notes about deliverables and terms, max 100 words)
+- total: number (calculated total amount)
+
+Make the line items specific and professional. If hours and rate are provided, use them. Otherwise, estimate reasonable pricing.
+
+Only return valid JSON, no other text.`
+      }],
+      temperature: 0.7
+    });
+
+    const response = completion.choices[0].message.content;
+
+    // Extract JSON from response
+    let jsonText = response.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
+
+    const aiResponse = JSON.parse(jsonText);
+
+    res.json({
+      items: aiResponse.items || [],
+      notes: aiResponse.notes || '',
+      total: aiResponse.total || 0
+    });
+  } catch (err) {
+    console.error('AI invoice generation error:', err);
+    res.status(500).json({
+      error: 'AI invoice generation failed',
+      items: []
+    });
+  }
+});
+
 // ----------  404 HANDLER  ----------
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
