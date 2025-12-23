@@ -264,26 +264,13 @@
                             </button>
                         </div>
                         
-                        <!-- AI Preview -->
-                        <div class="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300">
-                            <div id="aiInvoicePreview" class="hidden">
-                                <h4 class="text-lg font-semibold text-gray-900 mb-4">AI-Generated Invoice Preview</h4>
-                                <div id="previewContent" class="space-y-4">
-                                    <!-- AI-generated content will appear here -->
-                                </div>
-                                <div class="mt-6 flex space-x-3">
-                                    <button id="acceptAIInvoice" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">Accept & Create</button>
-                                    <button id="refineAIInvoice" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition-colors">Refine</button>
-                                </div>
-                            </div>
-                            
-                            <div id="aiPlaceholder" class="text-center py-12">
-                                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                </svg>
-                                <p class="text-gray-600 mb-2">AI Invoice Generator</p>
-                                <p class="text-sm text-gray-500">Fill in the project details and let AI create a professional invoice for you</p>
-                            </div>
+                        <!-- AI Preview hint - clicking Generate will show modal -->
+                        <div class="bg-white p-6 rounded-lg border-2 border-dashed border-gray-300 text-center py-12">
+                            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                            <p class="text-gray-600 mb-2">AI Invoice Generator</p>
+                            <p class="text-sm text-gray-500">Fill in the project details and click Generate AI Invoice</p>
                         </div>
                     </div>
                 </div>
@@ -705,9 +692,14 @@
                 document.getElementById('acceptAIInvoice').addEventListener('click', () => {
                     this.acceptAIInvoice();
                 });
-                
-                document.getElementById('refineAIInvoice').addEventListener('click', () => {
-                    this.refineAIInvoice();
+
+                // Modal close buttons
+                document.getElementById('closeAIModal').addEventListener('click', () => {
+                    this.hideAIModal();
+                });
+
+                document.getElementById('closeModalBtn').addEventListener('click', () => {
+                    this.hideAIModal();
                 });
                 
                 // Existing invoice functionality
@@ -805,20 +797,35 @@
                 const projectType = document.getElementById('projectType').value;
                 const estimatedHours = parseFloat(document.getElementById('estimatedHours').value) || 0;
                 const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
-                
+
                 if (!projectDescription.trim()) {
                     this.showErrorMessage('Please provide a project description');
                     return;
                 }
-                
-                // Show thinking state
+
+                // Show modal with thinking state
+                this.showAIModal();
                 this.showAIThinking();
-                
+
                 // Simulate AI processing
                 setTimeout(() => {
                     const aiInvoice = this.createAIInvoice(projectDescription, client, projectType, estimatedHours, hourlyRate);
                     this.displayAIInvoicePreview(aiInvoice);
                 }, 2000);
+            }
+
+            showAIModal() {
+                const modal = document.getElementById('aiInvoiceModal');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                }
+            }
+
+            hideAIModal() {
+                const modal = document.getElementById('aiInvoiceModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
             }
             
             createAIInvoice(description, client, type, hours, rate) {
@@ -891,30 +898,26 @@
             }
             
             showAIThinking() {
-                const preview = document.getElementById('aiInvoicePreview');
-                const placeholder = document.getElementById('aiPlaceholder');
-                
-                placeholder.innerHTML = `
-                    <div class="ai-thinking text-center py-8">
-                        <svg class="w-12 h-12 text-green-600 mx-auto mb-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        <p class="text-green-600 font-medium mb-2">AI is analyzing your project...</p>
+                const content = document.getElementById('aiInvoicePreviewContent');
+                const actions = document.getElementById('aiInvoiceActions');
+
+                content.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
+                        <p class="text-purple-600 font-medium mb-2">AI is analyzing your project...</p>
                         <p class="text-sm text-gray-500">Generating professional invoice based on your requirements</p>
                     </div>
                 `;
-                
-                preview.classList.add('hidden');
-                placeholder.classList.remove('hidden');
+
+                actions.classList.add('hidden');
             }
             
             displayAIInvoicePreview(aiInvoice) {
-                const preview = document.getElementById('aiInvoicePreview');
-                const placeholder = document.getElementById('aiPlaceholder');
-                const content = document.getElementById('previewContent');
-                
+                const content = document.getElementById('aiInvoicePreviewContent');
+                const actions = document.getElementById('aiInvoiceActions');
+
                 content.innerHTML = `
-                    <div class="bg-purple-50 p-4 rounded-lg">
+                    <div class="bg-purple-50 p-4 rounded-lg mb-4">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium text-purple-900">AI Confidence Score</span>
                             <span class="text-sm text-purple-700">${aiInvoice.confidence}%</span>
@@ -923,8 +926,8 @@
                             <div class="bg-purple-600 h-2 rounded-full" style="width: ${aiInvoice.confidence}%"></div>
                         </div>
                     </div>
-                    
-                    <div class="bg-gray-50 p-4 rounded-lg">
+
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
                         <h5 class="font-semibold text-gray-900 mb-3">Invoice Details</h5>
                         <div class="space-y-2">
                             <div class="flex justify-between">
@@ -937,8 +940,8 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="bg-gray-50 p-4 rounded-lg">
+
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
                         <h5 class="font-semibold text-gray-900 mb-3">Line Items</h5>
                         <div class="space-y-2">
                             ${aiInvoice.items.map(item => `
@@ -949,32 +952,33 @@
                             `).join('')}
                         </div>
                     </div>
-                    
+
                     <div class="bg-blue-50 p-4 rounded-lg">
                         <h5 class="font-semibold text-blue-900 mb-2">AI-Generated Notes</h5>
                         <p class="text-sm text-blue-700">${aiInvoice.notes}</p>
                     </div>
                 `;
-                
-                placeholder.classList.add('hidden');
-                preview.classList.remove('hidden');
-                
+
+                // Show actions
+                actions.classList.remove('hidden');
+
                 // Store the AI invoice for acceptance
                 this.currentAIInvoice = aiInvoice;
-                
+
                 // Animate the preview appearance
-                anime({
-                    targets: preview,
-                    opacity: [0, 1],
-                    translateY: [20, 0],
-                    duration: 400,
+                if (typeof anime !== 'undefined') {
+                    anime({
+                        targets: content,
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        duration: 400,
                     easing: 'easeOutQuart'
                 });
             }
             
             acceptAIInvoice() {
                 if (!this.currentAIInvoice) return;
-                
+
                 // Create invoice from AI-generated data
                 const newInvoice = {
                     id: `INV-2025-AI-${String(this.invoices.length + 1).padStart(3, '0')}`,
@@ -985,12 +989,13 @@
                     status: 'draft',
                     items: this.currentAIInvoice.items.map(item => item.description)
                 };
-                
+
                 this.invoices.unshift(newInvoice);
                 this.applyFilters();
                 this.showSuccessMessage('AI-generated invoice created successfully!');
-                
-                // Reset AI generator
+
+                // Close modal and reset
+                this.hideAIModal();
                 this.resetAIGenerator();
             }
             
@@ -1479,5 +1484,42 @@
             new InvoicesPageEnhanced();
         });
     </script>
+
+    <!-- AI Invoice Preview Modal -->
+    <div id="aiInvoiceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13 7H7v6h6V7z"/>
+                        <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/>
+                    </svg>
+                    AI-Generated Invoice Preview
+                </h3>
+                <button id="closeAIModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="aiInvoicePreviewContent" class="space-y-4">
+                    <div class="text-center py-12">
+                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mb-4"></div>
+                        <p class="text-gray-600">Generating invoice...</p>
+                    </div>
+                </div>
+                <div id="aiInvoiceActions" class="hidden mt-6 flex space-x-3">
+                    <button id="acceptAIInvoice" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
+                        Accept & Create Invoice
+                    </button>
+                    <button id="closeModalBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-lg font-semibold transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
