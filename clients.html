@@ -422,114 +422,30 @@
         // Clients page specific functionality
         class ClientsPage {
             constructor() {
-                this.clients = [
-                    {
-                        id: 1,
-                        name: 'Acme Corp',
-                        email: 'contact@acme.com',
-                        phone: '(555) 123-4567',
-                        industry: 'Technology',
-                        revenue: 15000,
-                        balance: 2500,
-                        status: 'active',
-                        lastContact: '2025-12-01',
-                        notes: 'Long-term client, excellent payment history'
-                    },
-                    {
-                        id: 2,
-                        name: 'Creative Agency',
-                        email: 'projects@creative.com',
-                        phone: '(555) 234-5678',
-                        industry: 'Marketing',
-                        revenue: 12000,
-                        balance: 0,
-                        status: 'active',
-                        lastContact: '2025-11-28',
-                        notes: 'Design-focused projects, prefers monthly billing'
-                    },
-                    {
-                        id: 3,
-                        name: 'Tech Startup',
-                        email: 'hello@techstartup.com',
-                        phone: '(555) 345-6789',
-                        industry: 'Technology',
-                        revenue: 8500,
-                        balance: 1200,
-                        status: 'active',
-                        lastContact: '2025-11-25',
-                        notes: 'Fast-growing startup, needs flexible scheduling'
-                    },
-                    {
-                        id: 4,
-                        name: 'Healthcare Solutions',
-                        email: 'info@healthcare.com',
-                        phone: '(555) 456-7890',
-                        industry: 'Healthcare',
-                        revenue: 22000,
-                        balance: 5000,
-                        status: 'active',
-                        lastContact: '2025-11-20',
-                        notes: 'Compliance-focused projects, quarterly reviews'
-                    },
-                    {
-                        id: 5,
-                        name: 'Retail Chain Inc',
-                        email: 'procurement@retail.com',
-                        phone: '(555) 567-8901',
-                        industry: 'Retail',
-                        revenue: 18000,
-                        balance: 3200,
-                        status: 'active',
-                        lastContact: '2025-11-15',
-                        notes: 'Multiple location projects, standardized processes'
-                    },
-                    {
-                        id: 6,
-                        name: 'Financial Services Co',
-                        email: 'projects@finance.com',
-                        phone: '(555) 678-9012',
-                        industry: 'Finance',
-                        revenue: 9500,
-                        balance: 0,
-                        status: 'active',
-                        lastContact: '2025-11-10',
-                        notes: 'Security-sensitive work, NDA required'
-                    },
-                    {
-                        id: 7,
-                        name: 'Education Platform',
-                        email: 'admin@education.com',
-                        phone: '(555) 789-0123',
-                        industry: 'Education',
-                        revenue: 6700,
-                        balance: 800,
-                        status: 'active',
-                        lastContact: '2025-11-05',
-                        notes: 'Academic calendar considerations'
-                    },
-                    {
-                        id: 8,
-                        name: 'Manufacturing Ltd',
-                        email: 'contracts@mfg.com',
-                        phone: '(555) 890-1234',
-                        industry: 'Manufacturing',
-                        revenue: 14200,
-                        balance: 2100,
-                        status: 'active',
-                        lastContact: '2025-10-28',
-                        notes: 'Industrial automation focus'
-                    }
-                ];
-                
-                this.filteredClients = [...this.clients];
+                this.clients = [];
+                this.filteredClients = [];
                 this.init();
             }
-            
-            init() {
+
+            async init() {
                 this.setupEventListeners();
-                this.renderClients();
+                await this.loadClients();
                 this.initializeChart();
                 this.setupScrollReveal();
+            }
+
+            async loadClients() {
+                try {
+                    const response = await Auth.get('/api/clients');
+                    const data = await response.json();
+                    this.clients = data.clients || [];
+                    this.filteredClients = [...this.clients];
+                    this.renderClients();
+                } catch (error) {
+                    console.error('Failed to load clients:', error);
+                    this.clients = [];
+                    this.filteredClients = [];
+                }
             }
             
             setupEventListeners() {
@@ -764,31 +680,34 @@
                 document.getElementById('clientForm').reset();
             }
             
-            handleClientSubmit() {
+            async handleClientSubmit() {
                 const name = document.getElementById('clientName').value;
                 const email = document.getElementById('clientEmail').value;
                 const phone = document.getElementById('clientPhone').value;
                 const industry = document.getElementById('clientIndustry').value;
                 const notes = document.getElementById('clientNotes').value;
-                
-                const newClient = {
-                    id: this.clients.length + 1,
-                    name: name,
-                    email: email,
-                    phone: phone,
-                    industry: industry,
-                    revenue: 0,
-                    balance: 0,
-                    status: 'active',
-                    lastContact: new Date().toISOString().split('T')[0],
-                    notes: notes || 'New client'
-                };
-                
-                this.clients.unshift(newClient);
-                this.applyFilters();
-                this.hideAddClientModal();
-                this.showSuccessMessage('Client added successfully!');
-                this.initializeChart(); // Refresh chart
+
+                try {
+                    const response = await Auth.post('/api/clients', {
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        industry: industry,
+                        notes: notes || 'New client'
+                    });
+
+                    if (response.ok) {
+                        await this.loadClients();
+                        this.hideAddClientModal();
+                        this.showSuccessMessage('Client added successfully!');
+                        this.initializeChart();
+                    } else {
+                        this.showSuccessMessage('Failed to add client');
+                    }
+                } catch (error) {
+                    console.error('Error adding client:', error);
+                    this.showSuccessMessage('Failed to add client');
+                }
             }
             
             handleSearch(query) {
