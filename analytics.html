@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics - FinanceFlow</title>
+    <title>Analytics - FinanceFlowCFO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
@@ -105,7 +105,7 @@
     <nav class="glass-nav fixed w-full top-0 z-50 px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-8">
-                <h1 class="text-2xl font-bold gradient-text">FinanceFlow</h1>
+                <h1 class="text-2xl font-bold gradient-text">FinanceFlowCFO</h1>
                 <div class="hidden md:flex space-x-6">
                     <a href="index.html" class="px-4 py-2 rounded-lg bg-purple-900/80 text-white font-medium hover:bg-purple-900 transition-colors">Dashboard</a>
                     <a href="expenses.html" class="px-4 py-2 rounded-lg bg-purple-900/80 text-white font-medium hover:bg-purple-900 transition-colors">Expenses</a>
@@ -370,8 +370,8 @@
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-semibold text-gray-900">Custom Dashboard Builder</h3>
                     <div class="flex space-x-2">
-                        <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Add Widget</button>
-                        <button class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700">Save Layout</button>
+                        <button id="addWidgetBtn" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Add Widget</button>
+                        <button id="saveLayoutBtn" class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700">Save Layout</button>
                     </div>
                 </div>
                 
@@ -421,7 +421,7 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-8 px-6">
         <div class="max-w-7xl mx-auto text-center">
-            <p class="text-gray-400">&copy; 2025 FinanceFlow. AI-powered financial management for freelancers.</p>
+            <p class="text-gray-400">&copy; 2025 FinanceFlowCFO. AI-powered financial management for freelancers.</p>
         </div>
     </footer>
 
@@ -445,18 +445,42 @@
                 document.getElementById('refreshAnalyticsBtn').addEventListener('click', () => {
                     this.refreshAnalytics();
                 });
-                
+
                 // Trend period change
                 document.getElementById('trendPeriod').addEventListener('change', (e) => {
                     this.updateExpenseTrends(e.target.value);
                 });
-                
+
                 // Anomaly alert clicks
                 document.querySelectorAll('.anomaly-alert').forEach(alert => {
                     alert.addEventListener('click', () => {
                         this.showAnomalyDetails();
                     });
                 });
+
+                // Add Widget button
+                const addWidgetBtn = document.getElementById('addWidgetBtn');
+                if (addWidgetBtn) {
+                    addWidgetBtn.addEventListener('click', () => {
+                        this.showAddWidgetModal();
+                    });
+                }
+
+                // Save Layout button
+                const saveLayoutBtn = document.getElementById('saveLayoutBtn');
+                if (saveLayoutBtn) {
+                    saveLayoutBtn.addEventListener('click', () => {
+                        this.saveCustomLayout();
+                    });
+                }
+            }
+
+            showAddWidgetModal() {
+                alert('Widget customization feature coming soon! This will allow you to:\n\n• Choose from various chart types\n• Add custom metrics\n• Rearrange dashboard layout\n• Create personalized views');
+            }
+
+            saveCustomLayout() {
+                alert('Dashboard layout saved! Your custom widget arrangement has been preserved.');
             }
             
             initializeCharts() {

@@ -4,7 +4,7 @@ const PRICE_MAP = {
   enterprise: 'price_1SbZHlFj4r8OeJwWRWXPpTUu'
 };
 
-class FinanceFlow {
+class FinanceFlowCFO {
   constructor() {
     // Demo data used if API fails
     this.demoDashboard = {
@@ -242,11 +242,86 @@ class FinanceFlow {
 
   setupAIInsights() {
     const refreshBtn = document.getElementById('refreshAIInsights');
-    if (!refreshBtn) return;
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        this.fetchAIInsights();
+      });
+    }
 
-    refreshBtn.addEventListener('click', () => {
-      this.fetchAIInsights();
+    // Setup bottom AI assistant suggestion buttons
+    const suggestionBtns = document.querySelectorAll('.ai-suggestion-btn');
+    suggestionBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.handleAISuggestion(e.target.dataset.suggestion);
+      });
     });
+  }
+
+  async handleAISuggestion(suggestion) {
+    const responseEl = document.getElementById('aiResponse');
+    if (!responseEl) return;
+
+    // Show response area with thinking animation
+    responseEl.classList.remove('hidden');
+    responseEl.innerHTML = `
+      <div class="flex items-center mb-3">
+        <div class="w-2 h-2 bg-purple-600 rounded-full mr-2 animate-pulse"></div>
+        <div class="w-2 h-2 bg-purple-600 rounded-full mr-2 animate-pulse" style="animation-delay: 0.2s"></div>
+        <div class="w-2 h-2 bg-purple-600 rounded-full mr-2 animate-pulse" style="animation-delay: 0.4s"></div>
+        <span class="text-sm text-gray-700">AI is analyzing your data...</span>
+      </div>
+    `;
+
+    try {
+      // Fetch actual AI insights
+      const response = await Auth.get('/api/ai/financial-insights');
+      if (!response.ok) throw new Error('Failed to fetch insights');
+
+      const data = await response.json();
+
+      let content = '';
+
+      if (suggestion === 'tax' && data.insights) {
+        content = `<p class="text-sm text-gray-700 mb-2"><strong>Tax-Deductible Insights:</strong></p>`;
+        const taxInsights = data.insights.filter(i => i.toLowerCase().includes('tax') || i.toLowerCase().includes('deduct'));
+        if (taxInsights.length > 0) {
+          content += '<ul class="space-y-1">';
+          taxInsights.forEach(insight => {
+            content += `<li class="text-sm text-gray-700">• ${insight}</li>`;
+          });
+          content += '</ul>';
+        } else {
+          content += `<p class="text-sm text-gray-600">Track your expenses and mark them as tax-deductible to get personalized insights!</p>`;
+        }
+      } else if (suggestion === 'budget' && data.recommendations) {
+        content = `<p class="text-sm text-gray-700 mb-2"><strong>Budget Optimization:</strong></p>`;
+        content += '<ul class="space-y-1">';
+        data.recommendations.forEach(rec => {
+          content += `<li class="text-sm text-gray-700">💡 ${rec}</li>`;
+        });
+        content += '</ul>';
+      } else if (suggestion === 'cashflow' && data.warnings) {
+        content = `<p class="text-sm text-gray-700 mb-2"><strong>Cash Flow Analysis:</strong></p>`;
+        if (data.warnings.length > 0) {
+          content += '<ul class="space-y-1">';
+          data.warnings.forEach(warning => {
+            content += `<li class="text-sm text-amber-700">⚠ ${warning}</li>`;
+          });
+          content += '</ul>';
+        } else {
+          content += `<p class="text-sm text-green-700">✓ Your cash flow looks healthy!</p>`;
+        }
+      }
+
+      if (!content) {
+        content = `<p class="text-sm text-gray-600">Add more financial data to get personalized AI insights!</p>`;
+      }
+
+      responseEl.innerHTML = content;
+    } catch (error) {
+      console.error('AI suggestion error:', error);
+      responseEl.innerHTML = `<p class="text-sm text-red-600">Failed to load AI insights. Please try again.</p>`;
+    }
   }
 
   async fetchAIInsights() {
@@ -307,7 +382,7 @@ class FinanceFlow {
 
     } catch (error) {
       console.error('AI insights error:', error);
-      contentEl.innerHTML = '<div class="text-center py-8 text-red-500"><p>Failed to load AI insights</p><p class="text-sm text-gray-500 mt-1">Make sure you\'re logged in and have added the GEMINI_API_KEY to your environment.</p></div>';
+      contentEl.innerHTML = '<div class="text-center py-8 text-red-500"><p>Failed to load AI insights</p><p class="text-sm text-gray-500 mt-1">Make sure you\'re logged in and have added the OPENAI_API_KEY to your environment.</p></div>';
     } finally {
       loadingEl.classList.add('hidden');
       contentEl.classList.remove('hidden');
@@ -382,10 +457,10 @@ class FinanceFlow {
 // BOOTSTRAP
 // -----------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  window.financeFlow = new FinanceFlow();
+  window.financeFlow = new FinanceFlowCFO();
 });
 
 // Export for CommonJS (optional)
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = FinanceFlow;
+  module.exports = FinanceFlowCFO;
 }
